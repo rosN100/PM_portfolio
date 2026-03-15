@@ -1250,6 +1250,12 @@ a:hover {
         padding: var(--gap) 16px 80px;
     }
     .left-column {
+        order: 2;
+    }
+    .right-column {
+        order: 1;
+    }
+    .left-column {
         flex-direction: column;
         flex-wrap: nowrap;
     }
