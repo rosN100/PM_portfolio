@@ -1,12 +1,5 @@
-const express = require('express');
-const path = require('path');
-const dotenv = require('dotenv');
 const { Resend } = require('resend');
 
-dotenv.config();
-
-const app = express();
-const port = Number(process.env.PORT) || 3000;
 const openAiApiKey = process.env.OPENAI_API_KEY || process.env.OPEN_AI_API_KEY;
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -156,10 +149,12 @@ Key stats:
 - Real-time slot reservation layer built to prevent double-booking
   across concurrent calls`;
 
-app.use(express.json({ limit: '1mb' }));
-app.use(express.static(__dirname));
+module.exports = async (req, res) => {
+    if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST');
+        return res.status(405).json({ error: 'Method not allowed.' });
+    }
 
-app.post('/api/chat', async (req, res) => {
     try {
         const { messages } = req.body || {};
 
@@ -224,13 +219,9 @@ app.post('/api/chat', async (req, res) => {
             return res.status(500).json({ error: 'Something went wrong. Please try again.' });
         }
 
-        return res.json({ reply });
+        return res.status(200).json({ reply });
     } catch (error) {
         console.error('Chat endpoint failed:', error);
         return res.status(500).json({ error: 'Something went wrong. Please try again.' });
     }
-});
-
-app.listen(port, () => {
-    console.log(`Portfolio server running at http://localhost:${port}`);
-});
+};
