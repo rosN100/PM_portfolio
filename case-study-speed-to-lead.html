@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed to Lead — Case Study · Roshan Kumar</title>
+    <meta name="description" content="67% of brokerages never responded to a buyer inquiry. I built an AI voice agent that calls within 60 seconds — and validated it before writing a single line of product code.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Barlow:wght@900&display=swap" rel="stylesheet">
+    <style>
+        /* ── Design tokens (match main site) ── */
+        :root {
+            --bg: #0b0b0b;
+            --bg-tile: #141414;
+            --bg-alt: #0e0e0e;
+            --border: #1f1f1f;
+            --border-hover: #333;
+            --text: #f0ede8;
+            --text-2: #7a7a7a;
+            --text-3: #3a3a3a;
+            --teal: #00D4AA;
+            --teal-dim: rgba(0,212,170,0.10);
+            --teal-glow: rgba(0,212,170,0.22);
+            --font-d: 'Barlow', sans-serif;
+            --font-b: 'Space Grotesk', sans-serif;
+            --r: 12px;
+            --t: 240ms ease;
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { font-size:16px; scroll-behavior:smooth; }
+        body {
+            font-family: var(--font-b);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* grain */
+        body::before {
+            content:'';
+            position:fixed;
+            inset:0;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity:0.03;
+            pointer-events:none;
+            z-index:9999;
+        }
+        a { color:var(--text); text-decoration:none; }
+
+        /* ── NAVBAR ── */
+        .nav {
+            position:sticky; top:0;
+            display:flex; align-items:center; justify-content:space-between;
+            padding:10px 40px;
+            background:rgba(11,11,11,0.88);
+            backdrop-filter:blur(14px);
+            border-bottom:1px solid var(--border);
+            z-index:100;
+        }
+        .nav-back {
+            display:inline-flex; align-items:center; gap:8px;
+            font-size:11px; font-weight:500; letter-spacing:0.08em;
+            text-transform:uppercase; color:var(--text-2);
+            transition:color var(--t);
+        }
+        .nav-back:hover { color:var(--teal); }
+        .nav-meta {
+            font-size:11px; color:var(--text-3); letter-spacing:0.04em;
+        }
+        .nav-download {
+            display:inline-flex; align-items:center; gap:7px;
+            background:var(--teal); color:#000;
+            font-family:var(--font-b); font-size:11px; font-weight:600;
+            letter-spacing:0.06em; text-transform:uppercase;
+            padding:8px 18px; border-radius:100px;
+            transition:opacity var(--t), transform var(--t);
+        }
+        .nav-download:hover { opacity:0.85; transform:translateY(-1px); color:#000; }
+
+        /* ── HERO ── */
+        .hero {
+            max-width:880px; margin:0 auto;
+            padding:72px 40px 48px;
+        }
+        .hero-label {
+            display:inline-block;
+            font-size:10px; font-weight:600; letter-spacing:0.14em;
+            text-transform:uppercase; color:var(--teal);
+            border:1px solid rgba(0,212,170,0.3); border-radius:100px;
+            padding:4px 14px; margin-bottom:24px;
+        }
+        .hero-title {
+            font-family:var(--font-d);
+            font-size:clamp(48px, 8vw, 90px);
+            font-weight:900; line-height:0.93;
+            letter-spacing:-0.02em;
+            text-transform:uppercase;
+            color:var(--text);
+            margin-bottom:24px;
+        }
+        .hero-sub {
+            font-size:16px; font-weight:400;
+            color:var(--text-2); max-width:560px; line-height:1.75;
+            margin-bottom:32px;
+        }
+        .hero-meta {
+            display:flex; flex-wrap:wrap; gap:24px;
+            padding-top:24px; border-top:1px solid var(--border);
+        }
+        .hero-meta-item { display:flex; flex-direction:column; gap:3px; }
+        .hero-meta-label {
+            font-size:9px; font-weight:600; letter-spacing:0.14em;
+            text-transform:uppercase; color:var(--text-3);
+        }
+        .hero-meta-value { font-size:13px; font-weight:500; color:var(--text-2); }
+
+        /* ── IMPACT METRICS ── */
+        .metrics-section {
+            background:var(--bg-tile);
+            border-top:1px solid var(--border);
+            border-bottom:1px solid var(--border);
+            padding:48px 40px;
+        }
+        .metrics-inner {
+            max-width:880px; margin:0 auto;
+        }
+        .section-label {
+            font-size:10px; font-weight:600; letter-spacing:0.14em;
+            text-transform:uppercase; color:var(--teal);
+            margin-bottom:24px; display:block;
+        }
+        .metrics-grid {
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:1px;
+            background:var(--border);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            overflow:hidden;
+        }
+        .metric-card {
+            background:var(--bg-tile);
+            padding:28px 24px;
+        }
+        .metric-value {
+            font-family:var(--font-d);
+            font-size:clamp(32px, 4vw, 48px);
+            font-weight:900; line-height:1;
+            color:var(--teal); margin-bottom:8px;
+        }
+        .metric-label {
+            font-size:12px; font-weight:400;
+            color:var(--text-2); line-height:1.5;
+        }
+
+        /* ── CORE INSIGHT CALLOUT ── */
+        .insight-callout {
+            max-width:880px; margin:0 auto;
+            padding:48px 40px;
+        }
+        .callout-box {
+            background:var(--teal-dim);
+            border:1px solid rgba(0,212,170,0.25);
+            border-left:3px solid var(--teal);
+            border-radius:var(--r);
+            padding:28px 32px;
+        }
+        .callout-box p {
+            font-size:15px; font-weight:500;
+            color:var(--text); line-height:1.75;
+        }
+        .callout-box strong { color:var(--teal); }
+
+        /* ── CONTENT SECTIONS ── */
+        .content {
+            max-width:880px; margin:0 auto;
+            padding:0 40px 80px;
+            display:flex; flex-direction:column; gap:64px;
+        }
+        .section-title {
+            font-family:var(--font-d);
+            font-size:28px; font-weight:900;
+            text-transform:uppercase; letter-spacing:-0.01em;
+            color:var(--text); margin-bottom:20px;
+            padding-bottom:12px;
+            border-bottom:1px solid var(--border);
+        }
+        .section p {
+            font-size:14px; color:var(--text-2); line-height:1.8; margin-bottom:16px;
+        }
+        .section p:last-child { margin-bottom:0; }
+
+        /* ── TABLE ── */
+        .data-table {
+            width:100%; border-collapse:collapse; margin:20px 0;
+            border-radius:var(--r); overflow:hidden;
+            border:1px solid var(--border);
+        }
+        .data-table th {
+            background:#111; text-align:left;
+            padding:11px 16px;
+            font-size:10px; font-weight:600; letter-spacing:0.1em;
+            text-transform:uppercase; color:var(--text-3);
+            border-bottom:1px solid var(--border);
+        }
+        .data-table td {
+            padding:11px 16px; font-size:13px; color:var(--text-2);
+            border-bottom:1px solid var(--border);
+        }
+        .data-table tr:last-child td { border-bottom:none; }
+        .data-table tr:hover td { background:#151515; color:var(--text); }
+        .data-table td strong, .data-table td b { color:var(--text); font-weight:600; }
+        .data-table td.highlight { color:var(--teal); font-weight:600; }
+
+        /* ── TWO-COL EXPERIMENT ROW ── */
+        .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+        .exp-card {
+            background:var(--bg-tile); border:1px solid var(--border);
+            border-radius:var(--r); padding:24px;
+        }
+        .exp-card h4 {
+            font-family:var(--font-d); font-size:16px; font-weight:900;
+            color:var(--text); text-transform:uppercase; margin-bottom:4px;
+        }
+        .exp-card .sub { font-size:10px; color:var(--text-3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; }
+        .exp-card p { font-size:13px; color:var(--text-2); line-height:1.6; }
+        .exp-card.primary { border-color:rgba(0,212,170,0.3); }
+        .exp-card.primary h4 { color:var(--teal); }
+
+        /* ── QUOTE CARDS ── */
+        .quotes-grid { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+        .quote-card {
+            background:var(--bg-tile); border:1px solid var(--border);
+            border-radius:var(--r); padding:20px 24px;
+            border-left:2px solid var(--border);
+            transition:border-color var(--t);
+        }
+        .quote-card:hover { border-left-color:var(--teal); }
+        .quote-card.signal { border-left-color:var(--teal); }
+        .quote-tag {
+            font-size:9px; font-weight:600; letter-spacing:0.12em;
+            text-transform:uppercase; color:var(--text-3); margin-bottom:8px;
+            display:block;
+        }
+        .quote-card blockquote {
+            font-size:14px; font-style:italic;
+            color:var(--text); line-height:1.7; margin-bottom:8px;
+        }
+        .quote-card p { font-size:12px; color:var(--text-2); margin:0; }
+
+        /* ── FLOW DIAGRAM ── */
+        .flow-diagram {
+            margin:20px 0;
+            border-radius:var(--r);
+            overflow:hidden;
+            border:1px solid var(--border);
+            background:var(--bg-tile);
+        }
+        .flow-diagram img {
+            width:100%;
+            display:block;
+        }
+        .flow-caption {
+            padding:12px 20px;
+            font-size:11px;
+            color:var(--text-3);
+            border-top:1px solid var(--border);
+            background:var(--bg-tile);
+        }
+
+        /* ── LEARNINGS ── */
+        .learnings-list { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+        .learning-item {
+            background:var(--bg-tile); border:1px solid var(--border);
+            border-radius:var(--r); padding:20px 24px;
+            display:grid; grid-template-columns:24px 1fr; gap:16px;
+            align-items:start;
+        }
+        .learning-num {
+            font-family:var(--font-d); font-size:18px; font-weight:900;
+            color:var(--teal); line-height:1.2;
+        }
+        .learning-item h4 {
+            font-size:13px; font-weight:600; color:var(--text);
+            margin-bottom:6px;
+        }
+        .learning-item p { font-size:13px; color:var(--text-2); line-height:1.6; margin:0; }
+
+        /* ── DOWNLOAD SECTION ── */
+        .download-section {
+            background:var(--bg-tile);
+            border-top:1px solid var(--border);
+            border-bottom:1px solid var(--border);
+            padding:48px 40px;
+            text-align:center;
+        }
+        .download-section h2 {
+            font-family:var(--font-d); font-size:28px; font-weight:900;
+            text-transform:uppercase; color:var(--text); margin-bottom:12px;
+        }
+        .download-section p { font-size:14px; color:var(--text-2); margin-bottom:28px; }
+        .download-btn {
+            display:inline-flex; align-items:center; gap:10px;
+            background:var(--teal); color:#000;
+            font-family:var(--font-b); font-size:13px; font-weight:700;
+            letter-spacing:0.04em; text-transform:uppercase;
+            padding:14px 32px; border-radius:100px;
+            transition:opacity var(--t), transform var(--t), box-shadow var(--t);
+            box-shadow:0 8px 32px rgba(0,212,170,0.25);
+        }
+        .download-btn:hover {
+            opacity:0.88; transform:translateY(-2px);
+            box-shadow:0 14px 40px rgba(0,212,170,0.35); color:#000;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            padding:32px 40px;
+            text-align:center;
+            font-size:11px; color:var(--text-3);
+            border-top:1px solid var(--border);
+        }
+        footer a { color:var(--text-3); border-bottom:1px solid var(--border); transition:color var(--t); }
+        footer a:hover { color:var(--teal); }
+
+        /* ── HERO STAT ── */
+        .hero-stat {
+            display:flex; align-items:baseline; gap:14px;
+            margin-bottom:32px;
+            padding:20px 24px;
+            background:var(--teal-dim);
+            border:1px solid rgba(0,212,170,0.22);
+            border-radius:var(--r);
+        }
+        .hero-stat-num {
+            font-family:var(--font-d);
+            font-size:clamp(40px,6vw,64px);
+            font-weight:900; line-height:1;
+            color:var(--teal);
+            flex-shrink:0;
+        }
+        .hero-stat-text {
+            font-size:16px; font-weight:500; color:var(--text);
+            line-height:1.5;
+        }
+
+        /* ── RESPONSE CHART ── */
+        .response-chart {
+            margin:28px 0;
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:24px;
+        }
+        .response-chart h4 {
+            font-size:10px; font-weight:600; letter-spacing:0.12em;
+            text-transform:uppercase; color:var(--text-3);
+            margin-bottom:20px;
+        }
+        .chart-rows { display:flex; flex-direction:column; gap:10px; }
+        .chart-row { display:grid; grid-template-columns:120px 1fr 36px; gap:12px; align-items:center; }
+        .chart-label { font-size:12px; color:var(--text-2); text-align:right; }
+        .chart-bar-wrap { background:#1a1a1a; border-radius:4px; overflow:hidden; height:24px; }
+        .chart-bar { height:100%; border-radius:4px; transition:width 1s cubic-bezier(0.16,1,0.3,1); }
+        .chart-bar.red { background:#e05050; }
+        .chart-bar.amber { background:#d4a017; }
+        .chart-bar.green { background:var(--teal); }
+        .chart-count { font-family:var(--font-d); font-size:15px; font-weight:900; color:var(--text); }
+        .chart-footer { margin-top:16px; font-size:11px; color:var(--text-3); }
+
+        /* ── TIME WINDOW STAT CARDS ── */
+        .time-window-cards {
+            margin-bottom:32px;
+        }
+        .time-window-cards h4 {
+            font-size:10px; font-weight:600; letter-spacing:0.12em;
+            text-transform:uppercase; color:var(--text-3); margin-bottom:16px;
+        }
+        .window-cards-grid {
+            display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
+        }
+        .window-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:20px;
+            display:flex; flex-direction:column; gap:4px;
+        }
+        .window-card.weekend { border-top:2px solid #e05050; }
+        .window-label { font-size:11px; color:var(--text-3); font-weight:500; }
+        .window-rate { font-family:var(--font-d); font-size:36px; font-weight:900; line-height:1; }
+        .window-rate.weekday, .window-rate.offhours { color:#d4a017; }
+        .window-rate.zero { color:#e05050; }
+        .window-sub { font-size:11px; color:var(--text-3); margin-bottom:8px; }
+        .window-bar-wrap { background:#1a1a1a; border-radius:3px; height:4px; width:100%; }
+        .window-bar { height:4px; border-radius:3px; min-width:4px; }
+
+        /* ── DETAILED V2 CHART ── */
+        .response-chart h4 {
+            font-size:10px; font-weight:600; letter-spacing:0.12em;
+            text-transform:uppercase; color:var(--text-3); margin-bottom:20px;
+        }
+        .chart-rows-v2 { display:flex; flex-direction:column; gap:8px; }
+        .chart-row-v2 {
+            display:grid;
+            grid-template-columns:110px 1fr 40px;
+            gap:12px; align-items:center;
+        }
+        .chart-label-v2 { font-size:12px; color:var(--text-2); text-align:right; white-space:nowrap; }
+        .chart-bar-wrap-v2 { background:#1a1a1a; border-radius:4px; overflow:hidden; height:32px; }
+        .chart-bar-v2 {
+            height:100%; border-radius:4px;
+            display:flex; align-items:center; padding-left:10px;
+            transition:width 1s cubic-bezier(0.16,1,0.3,1);
+        }
+        .bar-badge {
+            font-size:11px; font-weight:600; color:#fff;
+            white-space:nowrap; opacity:0.9;
+        }
+        .chart-pct { font-family:var(--font-d); font-size:13px; font-weight:900; color:var(--text); }
+
+        /* ── PRODUCT GOAL BLOCK ── */
+        .product-goal {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-top:3px solid var(--teal);
+            border-radius:var(--r);
+            padding:24px;
+            margin-bottom:20px;
+        }
+        .product-goal h4 {
+            font-size:10px; font-weight:600; letter-spacing:0.12em;
+            text-transform:uppercase; color:var(--teal);
+            margin-bottom:14px;
+        }
+        .goal-list { display:flex; flex-direction:column; gap:8px; }
+        .goal-item {
+            display:flex; align-items:center; gap:12px;
+            font-size:14px; font-weight:500; color:var(--text);
+        }
+        .goal-bullet {
+            width:6px; height:6px; border-radius:50%;
+            background:var(--teal); flex-shrink:0;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:768px) {
+            .nav { padding:10px 20px; }
+            .nav-meta { display:none; }
+            .hero { padding:40px 20px 32px; }
+            .metrics-section, .insight-callout { padding:40px 20px; }
+            .metrics-grid { grid-template-columns:repeat(2,1fr); }
+            .content { padding:0 20px 60px; }
+            .two-col { grid-template-columns:1fr; }
+            .download-section { padding:40px 20px; }
+            footer { padding:24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="nav">
+        <a href="index.html" class="nav-back">← Back to Portfolio</a>
+        <span class="nav-meta">Speed to Lead · Case Study · 2026</span>
+        <a href="Speed_to_Lead_PM_Case_Study (2).docx" download class="nav-download">↓ Download</a>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero">
+        <span class="hero-label">Case Study — 01</span>
+        <h1 class="hero-title">Speed<br>to Lead</h1>
+        <p class="hero-sub">
+            Solving lead response failure in real estate.
+        </p>
+        <div class="hero-stat">
+            <span class="hero-stat-num">67%</span>
+            <span class="hero-stat-text">of brokerages never responded to a buyer inquiry.</span>
+        </div>
+        <div class="hero-meta">
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Role</span>
+                <span class="hero-meta-value">Founder &amp; PM</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Timeline</span>
+                <span class="hero-meta-value">Jan – Mar 2026</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Market</span>
+                <span class="hero-meta-value">Florida Real Estate</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Product</span>
+                <span class="hero-meta-value">AI Voice Agent</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Budget</span>
+                <span class="hero-meta-value">$0 — Pre-build</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- IMPACT METRICS -->
+    <section class="metrics-section">
+        <div class="metrics-inner">
+            <span class="section-label">Impact Snapshot</span>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">67%</div>
+                    <div class="metric-label">Brokerages sent zero reply to a high-intent buyer inquiry</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0%</div>
+                    <div class="metric-label">Weekend response rate — 7 of 7 brokerages completely silent</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4.6×</div>
+                    <div class="metric-label">Higher signal quality from broker owners vs solo realtors</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">2</div>
+                    <div class="metric-label">Unsolicited demo requests from 173 cold emails sent</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CORE INSIGHT -->
+    <div class="insight-callout">
+        <div class="callout-box">
+            <p><strong>Core Insight:</strong> 67% of brokerages did not respond at all. This revealed that the problem isn't slow agents — it's the complete absence of a lead response system. Brokerages are paying for leads and have no infrastructure to receive them.</p>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <!-- CONTEXT -->
+        <section class="section">
+            <h2 class="section-title">Context &amp; Problem</h2>
+            <p>Real estate brokerages in the US spend heavily on paid lead channels — Zillow Premier Agent, Facebook/Instagram Ads, Google — yet systematically lose these leads due to slow or absent follow-up.</p>
+            <table class="data-table">
+                <thead><tr><th>Industry Data Point</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Lead contacted in &lt; 5 min</td><td class="highlight">100× more likely to qualify</td></tr>
+                    <tr><td>After 60 min wait</td><td>10× drop in connection probability</td></tr>
+                    <tr><td>US industry average callback time</td><td>15 hours</td></tr>
+                    <tr><td>Typical commission per transaction</td><td>~$10,000</td></tr>
+                    <tr><td>Miss 5 qualified leads/month</td><td>$50,000/month in lost revenue</td></tr>
+                </tbody>
+            </table>
+            <p><strong>Hypothesis:</strong> An AI voice agent that calls within 60 seconds of inquiry, qualifies the lead, and schedules a handoff call will be a solution brokerages pay for on retainer.</p>
+        </section>
+
+        <!-- EXPERIMENT 1 -->
+        <section class="section">
+            <h2 class="section-title">Experiment 1 — Speed-to-Lead Audit</h2>
+            <p>I submitted real buyer inquiry forms on Zillow for 30 highly qualified Florida brokerages across 3 time windows, posing as a high-intent buyer — pre-approved, $450K–$550K budget, relocating from New York, ready in 60–90 days.</p>
+            <table class="data-table">
+                <thead><tr><th>Response Window</th><th>Brokerages</th><th>Count</th><th>% of 30</th></tr></thead>
+                <tbody>
+                    <tr><td>&lt; 5 minutes</td><td>3 Tier A brokerages — same-day inbound routing</td><td>3</td><td>10%</td></tr>
+                    <tr><td>5 – 30 minutes</td><td>1 Tier A brokerage — agent on duty</td><td>1</td><td>3%</td></tr>
+                    <tr><td>30 min – 2 hours</td><td>2 Tier A/B brokerages — delayed agent callback</td><td>2</td><td>7%</td></tr>
+                    <tr><td>2 – 24 hours</td><td>2 Tier B brokerages — 15.5h and 23.5h response times</td><td>2</td><td>7%</td></tr>
+                    <tr><td>&gt; 24 hours</td><td>2 Tier B brokerages — 48h and 3-day response times</td><td>2</td><td>7%</td></tr>
+                    <tr><td><strong>No response</strong></td><td>20 brokerages — incl. all 5 weekend inquiries</td><td><strong>20</strong></td><td class="highlight">67%</td></tr>
+                </tbody>
+            </table>
+            <!-- RESPONSE RATE BY TIME WINDOW CARDS -->
+            <div class="time-window-cards">
+                <h4>Response rate by inquiry time window</h4>
+                <div class="window-cards-grid">
+                    <div class="window-card">
+                        <span class="window-label">Weekday (business hours)</span>
+                        <div class="window-rate weekday">56%</div>
+                        <div class="window-sub">9 of 16 responded</div>
+                        <div class="window-bar-wrap"><div class="window-bar" style="width:56%; background:#d4a017;"></div></div>
+                    </div>
+                    <div class="window-card">
+                        <span class="window-label">Off-hours (evenings/nights)</span>
+                        <div class="window-rate offhours">14%</div>
+                        <div class="window-sub">1 of 7 responded</div>
+                        <div class="window-bar-wrap"><div class="window-bar" style="width:14%; background:#d4a017;"></div></div>
+                    </div>
+                    <div class="window-card weekend">
+                        <span class="window-label">Weekend (Sat/Sun)</span>
+                        <div class="window-rate zero">0%</div>
+                        <div class="window-sub">0 of 7 responded</div>
+                        <div class="window-bar-wrap"><div class="window-bar" style="width:2%; background:#e05050;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DETAILED TIME DISTRIBUTION CHART -->
+            <div class="response-chart">
+                <h4>Response time distribution — 30 inquiries sent</h4>
+                <div class="chart-rows-v2">
+                    <div class="chart-row-v2">
+                        <span class="chart-label-v2">&lt; 5 min</span>
+                        <div class="chart-bar-wrap-v2">
+                            <div class="chart-bar-v2" style="width:10%; background:#00D4AA;">
+                                <span class="bar-badge">3 brokerages</span>
+                            </div>
+                        </div>
+                        <span class="chart-pct">10%</span>
+                    </div>
+                    <div class="chart-row-v2">
+                        <span class="chart-label-v2">5 – 30 min</span>
+                        <div class="chart-bar-wrap-v2">
+                            <div class="chart-bar-v2" style="width:3.33%; background:#5cb85c; min-width:80px;">
+                                <span class="bar-badge">1 brokerage</span>
+                            </div>
+                        </div>
+                        <span class="chart-pct">3%</span>
+                    </div>
+                    <div class="chart-row-v2">
+                        <span class="chart-label-v2">30 min – 2 hr</span>
+                        <div class="chart-bar-wrap-v2">
+                            <div class="chart-bar-v2" style="width:6.66%; background:#d4a017; min-width:90px;">
+                                <span class="bar-badge">2 brokerages</span>
+                            </div>
+                        </div>
+                        <span class="chart-pct">7%</span>
+                    </div>
+                    <div class="chart-row-v2">
+                        <span class="chart-label-v2">2 – 24 hrs</span>
+                        <div class="chart-bar-wrap-v2">
+                            <div class="chart-bar-v2" style="width:6.66%; background:#e07820; min-width:90px;">
+                                <span class="bar-badge">2 brokerages</span>
+                            </div>
+                        </div>
+                        <span class="chart-pct">7%</span>
+                    </div>
+                    <div class="chart-row-v2">
+                        <span class="chart-label-v2">&gt; 24 hrs</span>
+                        <div class="chart-bar-wrap-v2">
+                            <div class="chart-bar-v2" style="width:6.66%; background:#e05050; min-width:90px;">
+                                <span class="bar-badge">2 brokerages</span>
+                            </div>
+                        </div>
+                        <span class="chart-pct">7%</span>
+                    </div>
+                    <div class="chart-row-v2">
+                        <span class="chart-label-v2">No response</span>
+                        <div class="chart-bar-wrap-v2">
+                            <div class="chart-bar-v2" style="width:66.66%; background:#444;">
+                                <span class="bar-badge">20 brokerages</span>
+                            </div>
+                        </div>
+                        <span class="chart-pct">67%</span>
+                    </div>
+                </div>
+                <p class="chart-footer">Zillow Premier Agent brokerages · Florida market · Jan – Feb 2026</p>
+            </div>
+
+            <div class="callout-box">
+                <p><strong>Weekend = Dead Zone.</strong> 7 buyer inquiries sent on Saturday. 0 responses. These are Tier A/A+ teams with active Zillow Premier Agent subscriptions — paying per lead, answering none.</p>
+            </div>
+        </section>
+
+        <!-- EXPERIMENT 2 -->
+        <section class="section">
+            <h2 class="section-title">Experiment 2 — ICP Pain Validation</h2>
+            <p>Cold emails to two cohorts referencing the speed-to-lead problem. Measuring response rate, signal quality, and buying intent.</p>
+            <table class="data-table">
+                <thead><tr><th>Metric</th><th>Cohort 1 — Solo Realtors</th><th>Cohort 2 — Broker Owners</th></tr></thead>
+                <tbody>
+                    <tr><td>Emails sent</td><td>200</td><td>173</td></tr>
+                    <tr><td>Response rate</td><td>2.5% (5 of 200)</td><td>3.5% (6 of 173)</td></tr>
+                    <tr><td>High-signal responses</td><td>1 of 5 (20%)</td><td class="highlight">4 of 6 (67%)</td></tr>
+                    <tr><td>Opt-out / hostile</td><td>3 of 5 (60%)</td><td>1 of 6 (17%)</td></tr>
+                    <tr><td>Buying signals (demo)</td><td>0</td><td class="highlight">2 — unsolicited</td></tr>
+                    <tr><td>High-signal rate vs sent</td><td>0.5%</td><td class="highlight">2.3% (4.6× higher)</td></tr>
+                </tbody>
+            </table>
+
+            <div class="quotes-grid">
+                <div class="quote-card">
+                    <span class="quote-tag">Problem Acknowledged</span>
+                    <blockquote>"We try to respond fast but honestly it depends on the agent. Some leads slip through."</blockquote>
+                    <p>Owns the structural problem. Agent dependency = systemic, not personal. Direct ICP signal.</p>
+                </div>
+                <div class="quote-card signal">
+                    <span class="quote-tag">Buying Signal</span>
+                    <blockquote>"What exactly does your AI agent do with the lead? Does it call immediately?"</blockquote>
+                    <p>Specific product question — already evaluating fit. Warm lead.</p>
+                </div>
+                <div class="quote-card signal">
+                    <span class="quote-tag">Strongest Response — Unsolicited Demo Request</span>
+                    <blockquote>"We actually struggle with this. Happy to take a look if you want to show what you built."</blockquote>
+                    <p>Unsolicited demo invitation. Highest-value response in the dataset.</p>
+                </div>
+                <div class="quote-card">
+                    <span class="quote-tag">Addressable Objection</span>
+                    <blockquote>"We already have an ISA team handling inbound."</blockquote>
+                    <p>Not a rejection — an opening. ISA teams don't cover nights, weekends, or national holidays. AI fills the gap they can't.</p>
+                </div>
+            </div>
+
+            <div style="margin-top:20px;">
+                <div class="callout-box">
+                    <p><strong>Verdict: Broker Owners are the ICP.</strong> Cohort 2 produced 4.6× more high-signal responses per email sent, 2 unsolicited demo requests, and only 1 opt-out vs 3 from Cohort 1. Solo realtors see the problem as personal — and get defensive. Broker owners see it as systemic — and want a fix.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRODUCT DECISIONS -->
+        <section class="section">
+            <h2 class="section-title">Product Decisions Driven by Research</h2>
+            <table class="data-table">
+                <thead><tr><th>Signal Observed</th><th>Product Decision</th><th>Rationale</th></tr></thead>
+                <tbody>
+                    <tr><td>0% weekend response rate</td><td>AI agent runs 24/7/365 by default</td><td>Biggest pain window is off-hours and weekends</td></tr>
+                    <tr><td>Broker cites agent dependency</td><td>Report per agent, not just per brokerage</td><td>Broker needs visibility into which agents are the bottleneck</td></tr>
+                    <tr><td>ISA team objection</td><td>Position as ISA complement, not replacement</td><td>Removing ISA is too threatening — filling gaps is the easier sell</td></tr>
+                    <tr><td>Solo realtors reacted defensively</td><td>De-prioritise Cohort 1</td><td>Wrong segment — different product angle needed</td></tr>
+                    <tr><td>3 fast responders had no off-hours coverage</td><td>Lead with after-hours gap in outreach</td><td>Even self-perceived responsive teams have the weekend gap</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- SOLUTION ARCHITECTURE — VIDEO -->
+        <section class="section">
+            <h2 class="section-title">Solution Architecture</h2>
+            <div class="product-goal">
+                <h4>Product Goal</h4>
+                <div class="goal-list">
+                    <div class="goal-item"><span class="goal-bullet"></span>Response within 60 seconds of any inquiry</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>24/7/365 coverage — nights, weekends, holidays</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Automated qualification so agents only act on verified, high-intent leads</div>
+                </div>
+            </div>
+
+            <div class="flow-diagram">
+                <img src="speed_to_lead.png" alt="Speed to Lead architecture diagram showing inbound lead trigger, automation layer, AI voice call, qualification, and CRM updates">
+                <div class="flow-caption">Architecture diagram for the Speed to Lead system connecting inbound lead capture to AI qualification and CRM workflows.</div>
+            </div>
+
+            <table class="data-table">
+                <thead><tr><th>Layer</th><th>Detail</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Lead sources</strong></td><td>Zillow, Facebook Ads, Google Ads, website forms, landing pages</td></tr>
+                    <tr><td><strong>Automation layer</strong></td><td>Make (formerly Integromat) — webhook trigger, field extraction, phone formatting, metadata attachment, outbound call initiation</td></tr>
+                    <tr><td><strong>AI voice layer</strong></td><td>Vapi — greeting, qualification questions, response capture, structured data extraction, end-of-call webhook</td></tr>
+                    <tr><td><strong>Backend</strong></td><td>Node.js + Express — qualification logic, CRM update trigger</td></tr>
+                    <tr><td><strong>CRM</strong></td><td>HubSpot — contact lookup, record update (lead quality score, call summary, agent assignment, priority flag)</td></tr>
+                    <tr><td><strong>Sales actions</strong></td><td>Slack notification to agent, CRM deal creation, consultation scheduling</td></tr>
+                </tbody>
+            </table>
+            <div class="callout-box" style="margin-top:20px;">
+                <p><strong>System outcome:</strong> Instant speed-to-lead (&lt; 60 seconds) · Automated qualification · Structured CRM data · Human agents act only on qualified leads</p>
+            </div>
+        </section>
+
+        <!-- LEARNINGS -->
+        <section class="section">
+            <h2 class="section-title">What I Learned as a PM</h2>
+            <div class="learnings-list">
+                <div class="learning-item">
+                    <span class="learning-num">01</span>
+                    <div>
+                        <h4>Framing matters as much as the solution.</h4>
+                        <p>Different segments require different problem framing — the same pain sounds personal to a solo realtor and systemic to a broker owner.</p>
+                    </div>
+                </div>
+                <div class="learning-item">
+                    <span class="learning-num">02</span>
+                    <div>
+                        <h4>Experiment before building.</h4>
+                        <p>Both experiments ran before a single line of product code was written — architecture followed validation, not assumptions.</p>
+                    </div>
+                </div>
+                <div class="learning-item">
+                    <span class="learning-num">03</span>
+                    <div>
+                        <h4>Objections are product signals.</h4>
+                        <p>The ISA team objection revealed the exact positioning that made the product non-threatening — complement, not replace.</p>
+                    </div>
+                </div>
+                <div class="learning-item">
+                    <span class="learning-num">04</span>
+                    <div>
+                        <h4>Quantify the problem, don't describe it.</h4>
+                        <p>"67% of 30 Tier A brokerages didn't respond" is a proof point. "Brokerages miss leads" is just a claim.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- DOWNLOAD -->
+    <section class="download-section">
+        <h2>Read the Full Case Study</h2>
+        <p>Download the complete documented version including raw data, email templates, and detailed experiment logs.</p>
+        <a href="Speed_to_Lead_PM_Case_Study (2).docx" download class="download-btn">↓ Download Full Case Study</a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>Roshan Kumar · Founder, Soraaya AI · <a href="index.html">Back to Portfolio</a></p>
+    </footer>
+
+</body>
+</html>

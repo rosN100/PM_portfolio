@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terra Games — Product Work · Roshan Kumar</title>
+    <meta name="description" content="Top three games Roshan Kumar built as Product Manager at Terra, featuring embedded gameplay videos and key stats.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Barlow:wght@900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0b0b;
+            --bg-tile: #141414;
+            --bg-alt: #0e0e0e;
+            --border: #1f1f1f;
+            --text: #f0ede8;
+            --text-2: #7a7a7a;
+            --text-3: #3a3a3a;
+            --teal: #00D4AA;
+            --teal-dim: rgba(0, 212, 170, 0.1);
+            --font-d: 'Barlow', sans-serif;
+            --font-b: 'Space Grotesk', sans-serif;
+            --r: 12px;
+            --t: 240ms ease;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-b);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        a { color: var(--text); text-decoration: none; }
+
+        .nav {
+            position: sticky;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 40px;
+            background: rgba(11, 11, 11, 0.88);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+        .nav-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-2);
+            transition: color var(--t);
+        }
+        .nav-back:hover { color: var(--teal); }
+        .nav-meta {
+            font-size: 11px;
+            color: var(--text-3);
+            letter-spacing: 0.04em;
+        }
+
+        .hero {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 72px 40px 48px;
+        }
+        .hero-label {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--teal);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            border-radius: 100px;
+            padding: 4px 14px;
+            margin-bottom: 24px;
+        }
+        .hero-title {
+            font-family: var(--font-d);
+            font-size: clamp(44px, 8vw, 88px);
+            font-weight: 900;
+            line-height: 0.93;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+        .hero-sub {
+            font-size: 16px;
+            color: var(--text-2);
+            max-width: 640px;
+            margin-bottom: 32px;
+        }
+        .hero-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 32px;
+            padding: 20px 24px;
+            background: var(--teal-dim);
+            border: 1px solid rgba(0, 212, 170, 0.22);
+            border-radius: var(--r);
+        }
+        .hero-stat-num {
+            font-family: var(--font-d);
+            font-size: clamp(40px, 6vw, 64px);
+            font-weight: 900;
+            line-height: 1;
+            color: var(--teal);
+            flex-shrink: 0;
+        }
+        .hero-stat-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text);
+        }
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .hero-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .hero-meta-label {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-3);
+        }
+        .hero-meta-value {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-2);
+        }
+
+        .metrics-section {
+            background: var(--bg-tile);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 48px 40px;
+        }
+        .metrics-inner {
+            max-width: 1040px;
+            margin: 0 auto;
+        }
+        .section-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 24px;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            overflow: hidden;
+        }
+        .metric-card {
+            background: var(--bg-tile);
+            padding: 28px 24px;
+        }
+        .metric-value {
+            font-family: var(--font-d);
+            font-size: clamp(32px, 4vw, 48px);
+            font-weight: 900;
+            line-height: 1;
+            color: var(--teal);
+            margin-bottom: 8px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-2);
+            line-height: 1.5;
+        }
+
+        .content {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 64px 40px 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .games-grid {
+            display: grid;
+            gap: 20px;
+        }
+        .game-card {
+            background: linear-gradient(180deg, rgba(20, 20, 20, 0.96), rgba(14, 14, 14, 0.98));
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 24px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+            gap: 24px;
+            align-items: start;
+        }
+        .game-index {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .game-title {
+            font-family: var(--font-d);
+            font-size: clamp(26px, 4vw, 40px);
+            line-height: 0.95;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .game-desc {
+            color: var(--text-2);
+            font-size: 14px;
+            margin-bottom: 18px;
+            max-width: 48ch;
+        }
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .stat-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            font-size: 11px;
+            color: var(--text-2);
+        }
+        .stat-pill strong {
+            color: var(--text);
+            margin-right: 6px;
+            font-weight: 600;
+        }
+        .game-note {
+            font-size: 12px;
+            color: var(--text-3);
+            letter-spacing: 0.03em;
+        }
+        .video-frame {
+            position: relative;
+            border-radius: var(--r);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+            aspect-ratio: 16 / 9;
+            min-height: 220px;
+        }
+        .video-frame iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        footer {
+            padding: 32px 40px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-3);
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 900px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .game-card {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                padding: 10px 20px;
+            }
+            .nav-meta {
+                display: none;
+            }
+            .hero {
+                padding: 40px 20px 32px;
+            }
+            .metrics-section {
+                padding: 40px 20px;
+            }
+            .content {
+                padding: 40px 20px 60px;
+            }
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            footer {
+                padding: 24px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="index.html" class="nav-back">← Back to Portfolio</a>
+        <span class="nav-meta">Terra · Product Manager · Top Games</span>
+    </nav>
+
+    <header class="hero">
+        <span class="hero-label">Terra Showcase</span>
+        <h1 class="hero-title">Top Three<br>Games at<br>Terra</h1>
+        <p class="hero-sub">
+            A focused look at three of the standout titles I built as Product Manager at Terra, with gameplay footage and performance highlights.
+        </p>
+        <div class="hero-stat">
+            <span class="hero-stat-num">457K+</span>
+            <span class="hero-stat-text">combined plays across these three featured games.</span>
+        </div>
+        <div class="hero-meta">
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Role</span>
+                <span class="hero-meta-value">Product Manager</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Company</span>
+                <span class="hero-meta-value">Terra</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Portfolio Scope</span>
+                <span class="hero-meta-value">14 Games Shipped</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Featured Set</span>
+                <span class="hero-meta-value">Top 3 Titles</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="metrics-section">
+        <div class="metrics-inner">
+            <span class="section-label">Snapshot</span>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">199K</div>
+                    <div class="metric-label">Hitman Sniper plays</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">197K</div>
+                    <div class="metric-label">World War plays</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">61K</div>
+                    <div class="metric-label">Rage Hunter plays</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">3</div>
+                    <div class="metric-label">Featured games highlighted on this page</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="content">
+        <section class="games-grid" aria-label="Top Terra games">
+            <article class="game-card">
+                <div>
+                    <span class="game-index">Game 01</span>
+                    <h2 class="game-title">Hitman Sniper</h2>
+                    <p class="game-desc">A precision shooter built around quick stealth takedowns, score chasing, and high replayability.</p>
+                    <div class="stats-row">
+                        <span class="stat-pill"><strong>Plays</strong>199K</span>
+                        <span class="stat-pill"><strong>Role</strong>PM</span>
+                        <span class="stat-pill"><strong>Focus</strong>Stealth action</span>
+                    </div>
+                    <p class="game-note">Featured gameplay video embedded below.</p>
+                </div>
+                <div class="video-frame">
+                    <iframe
+                        src="https://www.youtube.com/embed/T9McDbyta4k"
+                        title="Hitman Sniper gameplay video"
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen></iframe>
+                </div>
+            </article>
+
+            <article class="game-card">
+                <div>
+                    <span class="game-index">Game 02</span>
+                    <h2 class="game-title">World War</h2>
+                    <p class="game-desc">A battlefield shooter experience designed for constant pressure, fast combat loops, and survival-driven engagement.</p>
+                    <div class="stats-row">
+                        <span class="stat-pill"><strong>Plays</strong>197K</span>
+                        <span class="stat-pill"><strong>Role</strong>PM</span>
+                        <span class="stat-pill"><strong>Focus</strong>War shooter</span>
+                    </div>
+                    <p class="game-note">Featured gameplay video embedded below.</p>
+                </div>
+                <div class="video-frame">
+                    <iframe
+                        src="https://www.youtube.com/embed/pyAjdk3x2fo"
+                        title="World War gameplay video"
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen></iframe>
+                </div>
+            </article>
+
+            <article class="game-card">
+                <div>
+                    <span class="game-index">Game 03</span>
+                    <h2 class="game-title">Rage Hunter</h2>
+                    <p class="game-desc">A monster-hunting action game shaped around quick combat sessions, escalating challenge, and progression-led retention.</p>
+                    <div class="stats-row">
+                        <span class="stat-pill"><strong>Plays</strong>61K</span>
+                        <span class="stat-pill"><strong>Role</strong>PM</span>
+                        <span class="stat-pill"><strong>Focus</strong>Action hunting</span>
+                    </div>
+                    <p class="game-note">Featured gameplay video embedded below.</p>
+                </div>
+                <div class="video-frame">
+                    <iframe
+                        src="https://www.youtube.com/embed/uBUiHe6KS7w"
+                        title="Rage Hunter gameplay video"
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen></iframe>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <footer>
+        Terra product work by Roshan Kumar.
+    </footer>
+</body>
+</html>

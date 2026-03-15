@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduling Agent — Case Study · Roshan Kumar</title>
+    <meta name="description" content="An end-to-end interview scheduling system for Build3 that called founders, matched them with mentors, sent calendar invites, and synced everything back to Zoho CRM.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Barlow:wght@900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0b0b;
+            --bg-tile: #141414;
+            --border: #1f1f1f;
+            --text: #f0ede8;
+            --text-2: #7a7a7a;
+            --text-3: #3a3a3a;
+            --teal: #00D4AA;
+            --teal-dim: rgba(0,212,170,0.10);
+            --font-d: 'Barlow', sans-serif;
+            --font-b: 'Space Grotesk', sans-serif;
+            --r: 12px;
+            --t: 240ms ease;
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { font-size:16px; scroll-behavior:smooth; }
+        body {
+            font-family: var(--font-b);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content:'';
+            position:fixed;
+            inset:0;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity:0.03;
+            pointer-events:none;
+            z-index:9999;
+        }
+        a { color:var(--text); text-decoration:none; }
+
+        .nav {
+            position:sticky;
+            top:0;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:10px 40px;
+            background:rgba(11,11,11,0.88);
+            backdrop-filter:blur(14px);
+            border-bottom:1px solid var(--border);
+            z-index:100;
+        }
+        .nav-back {
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-size:11px;
+            font-weight:500;
+            letter-spacing:0.08em;
+            text-transform:uppercase;
+            color:var(--text-2);
+            transition:color var(--t);
+        }
+        .nav-back:hover { color:var(--teal); }
+        .nav-meta {
+            font-size:11px;
+            color:var(--text-3);
+            letter-spacing:0.04em;
+        }
+
+        .hero {
+            max-width:880px;
+            margin:0 auto;
+            padding:72px 40px 48px;
+        }
+        .hero-label {
+            display:inline-block;
+            font-size:10px;
+            font-weight:600;
+            letter-spacing:0.14em;
+            text-transform:uppercase;
+            color:var(--teal);
+            border:1px solid rgba(0,212,170,0.3);
+            border-radius:100px;
+            padding:4px 14px;
+            margin-bottom:24px;
+        }
+        .hero-title {
+            font-family:var(--font-d);
+            font-size:clamp(42px, 7vw, 86px);
+            font-weight:900;
+            line-height:0.93;
+            letter-spacing:-0.02em;
+            text-transform:uppercase;
+            margin-bottom:24px;
+        }
+        .hero-sub {
+            font-size:16px;
+            color:var(--text-2);
+            max-width:620px;
+            line-height:1.75;
+            margin-bottom:32px;
+        }
+        .hero-stat {
+            display:flex;
+            align-items:baseline;
+            gap:14px;
+            margin-bottom:32px;
+            padding:20px 24px;
+            background:var(--teal-dim);
+            border:1px solid rgba(0,212,170,0.22);
+            border-radius:var(--r);
+        }
+        .hero-stat-num {
+            font-family:var(--font-d);
+            font-size:clamp(40px,6vw,64px);
+            font-weight:900;
+            line-height:1;
+            color:var(--teal);
+            flex-shrink:0;
+        }
+        .hero-stat-text {
+            font-size:16px;
+            font-weight:500;
+            color:var(--text);
+            line-height:1.5;
+        }
+        .hero-meta {
+            display:flex;
+            flex-wrap:wrap;
+            gap:24px;
+            padding-top:24px;
+            border-top:1px solid var(--border);
+        }
+        .hero-meta-item { display:flex; flex-direction:column; gap:3px; }
+        .hero-meta-label {
+            font-size:9px;
+            font-weight:600;
+            letter-spacing:0.14em;
+            text-transform:uppercase;
+            color:var(--text-3);
+        }
+        .hero-meta-value {
+            font-size:13px;
+            font-weight:500;
+            color:var(--text-2);
+        }
+
+        .metrics-section {
+            background:var(--bg-tile);
+            border-top:1px solid var(--border);
+            border-bottom:1px solid var(--border);
+            padding:48px 40px;
+        }
+        .metrics-inner {
+            max-width:880px;
+            margin:0 auto;
+        }
+        .section-label {
+            font-size:10px;
+            font-weight:600;
+            letter-spacing:0.14em;
+            text-transform:uppercase;
+            color:var(--teal);
+            margin-bottom:24px;
+            display:block;
+        }
+        .metrics-grid {
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:1px;
+            background:var(--border);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            overflow:hidden;
+        }
+        .metric-card {
+            background:var(--bg-tile);
+            padding:28px 24px;
+        }
+        .metric-value {
+            font-family:var(--font-d);
+            font-size:clamp(32px, 4vw, 48px);
+            font-weight:900;
+            line-height:1;
+            color:var(--teal);
+            margin-bottom:8px;
+        }
+        .metric-label {
+            font-size:12px;
+            color:var(--text-2);
+            line-height:1.5;
+        }
+
+        .insight-callout {
+            max-width:880px;
+            margin:0 auto;
+            padding:48px 40px;
+        }
+        .callout-box {
+            background:var(--teal-dim);
+            border:1px solid rgba(0,212,170,0.25);
+            border-left:3px solid var(--teal);
+            border-radius:var(--r);
+            padding:28px 32px;
+        }
+        .callout-box p {
+            font-size:15px;
+            font-weight:500;
+            color:var(--text);
+            line-height:1.75;
+        }
+        .callout-box strong { color:var(--teal); }
+
+        .content {
+            max-width:880px;
+            margin:0 auto;
+            padding:0 40px 80px;
+            display:flex;
+            flex-direction:column;
+            gap:64px;
+        }
+        .section-title {
+            font-family:var(--font-d);
+            font-size:28px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:-0.01em;
+            margin-bottom:20px;
+            padding-bottom:12px;
+            border-bottom:1px solid var(--border);
+        }
+        .section p {
+            font-size:14px;
+            color:var(--text-2);
+            line-height:1.8;
+            margin-bottom:16px;
+        }
+        .section p:last-child { margin-bottom:0; }
+
+        .two-col {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:16px;
+            margin:20px 0;
+        }
+        .exp-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:24px;
+        }
+        .exp-card h4 {
+            font-family:var(--font-d);
+            font-size:16px;
+            font-weight:900;
+            text-transform:uppercase;
+            margin-bottom:4px;
+        }
+        .exp-card .sub {
+            font-size:10px;
+            color:var(--text-3);
+            letter-spacing:0.1em;
+            text-transform:uppercase;
+            margin-bottom:16px;
+        }
+        .exp-card p {
+            font-size:13px;
+            color:var(--text-2);
+            line-height:1.6;
+        }
+        .exp-card.primary {
+            border-color:rgba(0,212,170,0.3);
+        }
+        .exp-card.primary h4 { color:var(--teal); }
+
+        .product-goal {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-top:3px solid var(--teal);
+            border-radius:var(--r);
+            padding:24px;
+            margin-bottom:20px;
+        }
+        .product-goal h4 {
+            font-size:10px;
+            font-weight:600;
+            letter-spacing:0.12em;
+            text-transform:uppercase;
+            color:var(--teal);
+            margin-bottom:14px;
+        }
+        .goal-list {
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+        .goal-item {
+            display:flex;
+            align-items:flex-start;
+            gap:12px;
+            font-size:14px;
+            font-weight:500;
+            color:var(--text);
+        }
+        .goal-bullet {
+            width:6px;
+            height:6px;
+            border-radius:50%;
+            background:var(--teal);
+            flex-shrink:0;
+            margin-top:9px;
+        }
+
+        .flow-diagram {
+            margin:24px 0;
+            border-radius:var(--r);
+            overflow:hidden;
+            border:1px solid var(--border);
+            background:var(--bg-tile);
+        }
+        .flow-diagram img {
+            width:100%;
+            display:block;
+        }
+        .flow-caption {
+            padding:12px 20px;
+            font-size:11px;
+            color:var(--text-3);
+            border-top:1px solid var(--border);
+            background:var(--bg-tile);
+        }
+
+        .data-table {
+            width:100%;
+            border-collapse:collapse;
+            margin:20px 0;
+            border-radius:var(--r);
+            overflow:hidden;
+            border:1px solid var(--border);
+        }
+        .data-table th {
+            background:#111;
+            text-align:left;
+            padding:11px 16px;
+            font-size:10px;
+            font-weight:600;
+            letter-spacing:0.1em;
+            text-transform:uppercase;
+            color:var(--text-3);
+            border-bottom:1px solid var(--border);
+        }
+        .data-table td {
+            padding:11px 16px;
+            font-size:13px;
+            color:var(--text-2);
+            border-bottom:1px solid var(--border);
+        }
+        .data-table tr:last-child td { border-bottom:none; }
+        .data-table td strong { color:var(--text); }
+        .data-table td.highlight {
+            color:var(--teal);
+            font-weight:600;
+        }
+
+        .quotes-grid {
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            margin-top:20px;
+        }
+        .quote-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:20px 24px;
+            border-left:2px solid var(--border);
+        }
+        .quote-card.signal { border-left-color:var(--teal); }
+        .quote-tag {
+            font-size:9px;
+            font-weight:600;
+            letter-spacing:0.12em;
+            text-transform:uppercase;
+            color:var(--text-3);
+            margin-bottom:8px;
+            display:block;
+        }
+        .quote-card blockquote {
+            font-size:14px;
+            font-style:italic;
+            color:var(--text);
+            line-height:1.7;
+            margin-bottom:8px;
+        }
+        .quote-card p {
+            font-size:12px;
+            color:var(--text-2);
+            margin:0;
+        }
+
+        .outcome-highlight {
+            background:linear-gradient(135deg, rgba(0,212,170,0.08) 0%, rgba(0,212,170,0.03) 100%);
+            border:1px solid rgba(0,212,170,0.25);
+            border-radius:var(--r);
+            padding:32px;
+            margin:20px 0;
+            text-align:center;
+        }
+        .outcome-highlight h3 {
+            font-family:var(--font-d);
+            font-size:24px;
+            font-weight:900;
+            text-transform:uppercase;
+            color:var(--teal);
+            margin-bottom:12px;
+        }
+        .outcome-highlight p {
+            font-size:15px;
+            color:var(--text);
+            line-height:1.75;
+            max-width:560px;
+            margin:0 auto;
+        }
+
+        .skills-grid {
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:12px;
+            margin-top:20px;
+        }
+        .skill-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:18px 20px;
+            display:flex;
+            align-items:flex-start;
+            gap:12px;
+        }
+        .skill-card-icon {
+            width:32px;
+            height:32px;
+            border-radius:8px;
+            background:rgba(0,212,170,0.08);
+            border:1px solid rgba(0,212,170,0.15);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:14px;
+            flex-shrink:0;
+        }
+        .skill-card-body h4 {
+            font-size:12px;
+            font-weight:600;
+            color:var(--text);
+            margin-bottom:4px;
+        }
+        .skill-card-body p {
+            font-size:11px;
+            color:var(--text-3);
+            line-height:1.5;
+            margin:0;
+        }
+
+        footer {
+            padding:32px 40px;
+            text-align:center;
+            font-size:11px;
+            color:var(--text-3);
+            border-top:1px solid var(--border);
+        }
+
+        @media (max-width:768px) {
+            .nav { padding:10px 20px; }
+            .nav-meta { display:none; }
+            .hero { padding:40px 20px 32px; }
+            .metrics-section, .insight-callout { padding:40px 20px; }
+            .metrics-grid { grid-template-columns:repeat(2,1fr); }
+            .content { padding:0 20px 60px; }
+            .two-col, .skills-grid { grid-template-columns:1fr; }
+            footer { padding:24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="index.html" class="nav-back">← Back to Portfolio</a>
+        <span class="nav-meta">Scheduling Agent · Case Study · 2025</span>
+    </nav>
+
+    <header class="hero">
+        <span class="hero-label">Case Study — 04</span>
+        <h1 class="hero-title">Scheduling<br>Agent</h1>
+        <p class="hero-sub">
+            An end-to-end interview scheduling system that called founders, matched them with mentors, sent calendar invites, and wrote everything back to Zoho CRM without a human making a single call.
+        </p>
+        <div class="hero-stat">
+            <span class="hero-stat-num">82.5%</span>
+            <span class="hero-stat-text">of interviews scheduled successfully in the very first automated call, with 100% final completion after reruns.</span>
+        </div>
+        <div class="hero-meta">
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Role</span>
+                <span class="hero-meta-value">Founder &amp; PM</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Client</span>
+                <span class="hero-meta-value">Build3 Startup Accelerator</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Timeline</span>
+                <span class="hero-meta-value">May – July 2025</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Build Time</span>
+                <span class="hero-meta-value">10 Days</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Product</span>
+                <span class="hero-meta-value">Voice + CRM Scheduling Automation</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="metrics-section">
+        <div class="metrics-inner">
+            <span class="section-label">Impact Snapshot</span>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">40</div>
+                    <div class="metric-label">Applications handled in the pilot</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">33</div>
+                    <div class="metric-label">Founders scheduled in a single automated call</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4</div>
+                    <div class="metric-label">Mentor calendars matched and load-balanced automatically</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Manual scheduling calls made by the team</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="insight-callout">
+        <div class="callout-box">
+            <p><strong>Core Insight:</strong> Scheduling sounds operationally small, but it quietly eats hours of high-value team time every cohort. The real product goal was not calendar sync. It was returning full scheduling capacity back to the Build3 team.</p>
+        </div>
+    </div>
+
+    <main class="content">
+        <section class="section">
+            <h2 class="section-title">The Context</h2>
+            <p>Iro AI was selected for the Build3 startup accelerator cohort in May - July 2025. On pitch day, the Build3 team saw the system direction and asked us to build this automation for a workflow they were struggling with themselves.</p>
+            <p>That made the opportunity unusually strong: we were not pitching an abstract idea. We were stepping into a real operational bottleneck that the client already felt every cohort.</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">The Problem</h2>
+            <p>Founders applied to Build3's fundraising program through the official website. After basic validation, applications flowed into Zoho CRM, where mentors reviewed and qualified each one manually.</p>
+            <p>Once a founder was qualified, the next step was scheduling an interview with one of four mentors. In practice, that meant someone on the team calling founders one by one, checking mentor calendars, confirming availability, and updating CRM records by hand. It was repetitive work, but it still demanded real coordination accuracy and real time.</p>
+            <div class="two-col">
+                <div class="exp-card">
+                    <h4>The Old Way</h4>
+                    <div class="sub">Manual scheduling loop</div>
+                    <p>Team members spent hours calling founders, juggling mentor calendars, and updating records one interview at a time.</p>
+                </div>
+                <div class="exp-card primary">
+                    <h4>The AI Way</h4>
+                    <div class="sub">Closed-loop automation</div>
+                    <p>A qualified CRM record triggered an AI call, mentor matching, calendar invite creation, and CRM writeback without human intervention.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">The Solution</h2>
+            <p>We built a fully automated scheduling pipeline that begins the moment a lead is marked as qualified in Zoho CRM.</p>
+
+            <div class="product-goal">
+                <h4>Automation Journey</h4>
+                <div class="goal-list">
+                    <div class="goal-item"><span class="goal-bullet"></span>Lead is marked qualified inside Zoho CRM</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Automation triggers instantly without team input</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>AI calls the founder and checks availability</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>System offers three real mentor time slots</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Best mentor is selected using availability and load-balancing logic</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Invite is sent before the call ends and CRM is updated automatically</div>
+                </div>
+            </div>
+
+            <p>The team only stepped in when a record needed manual correction and the flow had to be rerun. Otherwise, the system owned the full workflow from trigger to confirmation.</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">System Architecture</h2>
+            <p>The architecture was designed as a full operational loop, not a standalone call bot. Every state change mattered: CRM qualification, live slot checking, mentor assignment, invite creation, transcript logging, and failure handling all had to stay in sync.</p>
+
+            <div class="flow-diagram">
+                <img src="scheduling_agent_arch.png" alt="Scheduling Agent architecture diagram showing CRM trigger, AI call, slot offering, mentor matching, invite creation, and CRM update">
+                <div class="flow-caption">Architecture diagram for the Scheduling Agent system used in the Build3 pilot.</div>
+            </div>
+
+            <p>The mentor-matching logic accounted for availability, load distribution, and fit across four Build3 mentors. For calls that did not end in a completed schedule, the failure reason was written back into CRM, the record was corrected manually, and the system was rerun until completion.</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Build Snapshot</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Dimension</th>
+                        <th>Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Build period</strong></td>
+                        <td>May - July 2025</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Build time</strong></td>
+                        <td class="highlight">10 days including testing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pilot size</strong></td>
+                        <td>40 applications</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scheduled in first call</strong></td>
+                        <td class="highlight">33 founders (82.5%)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scheduled after rerun</strong></td>
+                        <td>7 founders</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Final completion</strong></td>
+                        <td class="highlight">100%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mentors integrated</strong></td>
+                        <td>4</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CRM</strong></td>
+                        <td>Zoho with bidirectional sync</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Manual team calls</strong></td>
+                        <td>0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Pilot Results</h2>
+            <p>Thirty-three of forty founders were scheduled in a single automated call, with no follow-up and no human intervention. The remaining seven required a manual CRM correction and a rerun of the flow. Every one of them was subsequently scheduled, resulting in 100 percent final completion.</p>
+            <p>The broader outcome was bandwidth. Work that had consumed hours every cohort was converted into an automated process that ran while the team focused elsewhere.</p>
+
+            <div class="quotes-grid">
+                <div class="quote-card signal">
+                    <span class="quote-tag">Build Insight</span>
+                    <blockquote>Mentor availability was the hardest constraint to solve cleanly across concurrent candidates.</blockquote>
+                    <p>A real-time slot reservation layer was added so once a time slot was offered to a founder, it stayed locked until the call concluded, preventing double-booking.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Client Outcome</h2>
+            <div class="outcome-highlight">
+                <h3>From Manual Calls to Zero Manual Calls</h3>
+                <p>Build3 asked us to build the system during our own accelerator cohort. It then ran on their live applicant pipeline and returned full scheduling capacity to the team in just 10 days.</p>
+            </div>
+            <p>The relationship started with Build3 as accelerator and Iro AI as founder. It ended with Build3 as client and Iro AI as product team, which made this project as meaningful commercially as it was operationally.</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Product Skills Demonstrated</h2>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <div class="skill-card-icon">↗</div>
+                    <div class="skill-card-body">
+                        <h4>End-to-End Workflow Automation</h4>
+                        <p>Closed the loop from CRM trigger to calendar invite and status writeback.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">◎</div>
+                    <div class="skill-card-body">
+                        <h4>CRM Integration</h4>
+                        <p>Built bidirectional Zoho sync for qualification, transcript logging, and scheduling status.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">◌</div>
+                    <div class="skill-card-body">
+                        <h4>AI Voice Agent Design</h4>
+                        <p>Created structured call flows with real-time decision logic and scheduling confirmation.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">□</div>
+                    <div class="skill-card-body">
+                        <h4>Scheduling Systems</h4>
+                        <p>Handled real-time slot reservation, multi-mentor matching, and double-book prevention.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">△</div>
+                    <div class="skill-card-body">
+                        <h4>Rapid Delivery</h4>
+                        <p>Shipped a production-ready pilot in 10 days with measurable results on live workflow volume.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        Scheduling Agent case study by Roshan Kumar · Built by Iro AI
+    </footer>
+</body>
+</html>

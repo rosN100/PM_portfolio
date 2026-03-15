@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Night Shift Agent — Case Study · Roshan Kumar</title>
+    <meta name="description" content="A multi-agent voice AI system for Lohono Stays that handled after-hours luxury villa enquiries, protected high-value bookings, and earned full client handover after a 7-week pilot.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Barlow:wght@900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0b0b;
+            --bg-tile: #141414;
+            --bg-alt: #0e0e0e;
+            --border: #1f1f1f;
+            --text: #f0ede8;
+            --text-2: #7a7a7a;
+            --text-3: #3a3a3a;
+            --teal: #00D4AA;
+            --teal-dim: rgba(0,212,170,0.10);
+            --font-d: 'Barlow', sans-serif;
+            --font-b: 'Space Grotesk', sans-serif;
+            --r: 12px;
+            --t: 240ms ease;
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { font-size:16px; scroll-behavior:smooth; }
+        body {
+            font-family: var(--font-b);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content:'';
+            position:fixed;
+            inset:0;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity:0.03;
+            pointer-events:none;
+            z-index:9999;
+        }
+        a { color:var(--text); text-decoration:none; }
+
+        .nav {
+            position:sticky;
+            top:0;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:10px 40px;
+            background:rgba(11,11,11,0.88);
+            backdrop-filter:blur(14px);
+            border-bottom:1px solid var(--border);
+            z-index:100;
+        }
+        .nav-back {
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-size:11px;
+            font-weight:500;
+            letter-spacing:0.08em;
+            text-transform:uppercase;
+            color:var(--text-2);
+            transition:color var(--t);
+        }
+        .nav-back:hover { color:var(--teal); }
+        .nav-meta {
+            font-size:11px;
+            color:var(--text-3);
+            letter-spacing:0.04em;
+        }
+
+        .hero {
+            max-width:880px;
+            margin:0 auto;
+            padding:72px 40px 48px;
+        }
+        .hero-label {
+            display:inline-block;
+            font-size:10px;
+            font-weight:600;
+            letter-spacing:0.14em;
+            text-transform:uppercase;
+            color:var(--teal);
+            border:1px solid rgba(0,212,170,0.3);
+            border-radius:100px;
+            padding:4px 14px;
+            margin-bottom:24px;
+        }
+        .hero-title {
+            font-family:var(--font-d);
+            font-size:clamp(42px, 7vw, 86px);
+            font-weight:900;
+            line-height:0.93;
+            letter-spacing:-0.02em;
+            text-transform:uppercase;
+            margin-bottom:24px;
+        }
+        .hero-sub {
+            font-size:16px;
+            color:var(--text-2);
+            max-width:620px;
+            line-height:1.75;
+            margin-bottom:32px;
+        }
+        .hero-stat {
+            display:flex;
+            align-items:baseline;
+            gap:14px;
+            margin-bottom:32px;
+            padding:20px 24px;
+            background:var(--teal-dim);
+            border:1px solid rgba(0,212,170,0.22);
+            border-radius:var(--r);
+        }
+        .hero-stat-num {
+            font-family:var(--font-d);
+            font-size:clamp(40px,6vw,64px);
+            font-weight:900;
+            line-height:1;
+            color:var(--teal);
+            flex-shrink:0;
+        }
+        .hero-stat-text {
+            font-size:16px;
+            font-weight:500;
+            color:var(--text);
+            line-height:1.5;
+        }
+        .hero-meta {
+            display:flex;
+            flex-wrap:wrap;
+            gap:24px;
+            padding-top:24px;
+            border-top:1px solid var(--border);
+        }
+        .hero-meta-item { display:flex; flex-direction:column; gap:3px; }
+        .hero-meta-label {
+            font-size:9px;
+            font-weight:600;
+            letter-spacing:0.14em;
+            text-transform:uppercase;
+            color:var(--text-3);
+        }
+        .hero-meta-value {
+            font-size:13px;
+            font-weight:500;
+            color:var(--text-2);
+        }
+
+        .metrics-section {
+            background:var(--bg-tile);
+            border-top:1px solid var(--border);
+            border-bottom:1px solid var(--border);
+            padding:48px 40px;
+        }
+        .metrics-inner {
+            max-width:880px;
+            margin:0 auto;
+        }
+        .section-label {
+            font-size:10px;
+            font-weight:600;
+            letter-spacing:0.14em;
+            text-transform:uppercase;
+            color:var(--teal);
+            margin-bottom:24px;
+            display:block;
+        }
+        .metrics-grid {
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:1px;
+            background:var(--border);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            overflow:hidden;
+        }
+        .metric-card {
+            background:var(--bg-tile);
+            padding:28px 24px;
+        }
+        .metric-value {
+            font-family:var(--font-d);
+            font-size:clamp(32px, 4vw, 48px);
+            font-weight:900;
+            line-height:1;
+            color:var(--teal);
+            margin-bottom:8px;
+        }
+        .metric-label {
+            font-size:12px;
+            color:var(--text-2);
+            line-height:1.5;
+        }
+
+        .insight-callout {
+            max-width:880px;
+            margin:0 auto;
+            padding:48px 40px;
+        }
+        .callout-box {
+            background:var(--teal-dim);
+            border:1px solid rgba(0,212,170,0.25);
+            border-left:3px solid var(--teal);
+            border-radius:var(--r);
+            padding:28px 32px;
+        }
+        .callout-box p {
+            font-size:15px;
+            font-weight:500;
+            color:var(--text);
+            line-height:1.75;
+        }
+        .callout-box strong { color:var(--teal); }
+
+        .content {
+            max-width:880px;
+            margin:0 auto;
+            padding:0 40px 80px;
+            display:flex;
+            flex-direction:column;
+            gap:64px;
+        }
+        .section-title {
+            font-family:var(--font-d);
+            font-size:28px;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:-0.01em;
+            margin-bottom:20px;
+            padding-bottom:12px;
+            border-bottom:1px solid var(--border);
+        }
+        .section p {
+            font-size:14px;
+            color:var(--text-2);
+            line-height:1.8;
+            margin-bottom:16px;
+        }
+        .section p:last-child { margin-bottom:0; }
+
+        .two-col {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:16px;
+            margin:20px 0;
+        }
+        .exp-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:24px;
+        }
+        .exp-card h4 {
+            font-family:var(--font-d);
+            font-size:16px;
+            font-weight:900;
+            text-transform:uppercase;
+            margin-bottom:4px;
+        }
+        .exp-card .sub {
+            font-size:10px;
+            color:var(--text-3);
+            letter-spacing:0.1em;
+            text-transform:uppercase;
+            margin-bottom:16px;
+        }
+        .exp-card p {
+            font-size:13px;
+            color:var(--text-2);
+            line-height:1.6;
+        }
+        .exp-card.primary {
+            border-color:rgba(0,212,170,0.3);
+        }
+        .exp-card.primary h4 { color:var(--teal); }
+
+        .product-goal {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-top:3px solid var(--teal);
+            border-radius:var(--r);
+            padding:24px;
+            margin-bottom:20px;
+        }
+        .product-goal h4 {
+            font-size:10px;
+            font-weight:600;
+            letter-spacing:0.12em;
+            text-transform:uppercase;
+            color:var(--teal);
+            margin-bottom:14px;
+        }
+        .goal-list {
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+        .goal-item {
+            display:flex;
+            align-items:flex-start;
+            gap:12px;
+            font-size:14px;
+            font-weight:500;
+            color:var(--text);
+        }
+        .goal-bullet {
+            width:6px;
+            height:6px;
+            border-radius:50%;
+            background:var(--teal);
+            flex-shrink:0;
+            margin-top:9px;
+        }
+
+        .flow-diagram {
+            margin:24px 0;
+            border-radius:var(--r);
+            overflow:hidden;
+            border:1px solid var(--border);
+            background:var(--bg-tile);
+        }
+        .flow-diagram img {
+            width:100%;
+            display:block;
+        }
+        .flow-caption {
+            padding:12px 20px;
+            font-size:11px;
+            color:var(--text-3);
+            border-top:1px solid var(--border);
+            background:var(--bg-tile);
+        }
+
+        .arch-flow {
+            display:flex;
+            align-items:stretch;
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            overflow:hidden;
+            margin:20px 0 16px;
+        }
+        .arch-step {
+            flex:1;
+            padding:22px 16px;
+            text-align:center;
+            border-right:1px solid var(--border);
+        }
+        .arch-step:last-child { border-right:none; }
+        .arch-step-icon {
+            font-size:22px;
+            display:block;
+            margin-bottom:8px;
+        }
+        .arch-step-label {
+            font-size:11px;
+            font-weight:600;
+            color:var(--text);
+            letter-spacing:0.04em;
+            margin-bottom:4px;
+        }
+        .arch-step-sub {
+            font-size:10px;
+            color:var(--text-3);
+        }
+
+        .quotes-grid {
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            margin-top:20px;
+        }
+        .quote-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:20px 24px;
+            border-left:2px solid var(--border);
+        }
+        .quote-card.signal { border-left-color:var(--teal); }
+        .quote-tag {
+            font-size:9px;
+            font-weight:600;
+            letter-spacing:0.12em;
+            text-transform:uppercase;
+            color:var(--text-3);
+            margin-bottom:8px;
+            display:block;
+        }
+        .quote-card blockquote {
+            font-size:14px;
+            font-style:italic;
+            color:var(--text);
+            line-height:1.7;
+            margin-bottom:8px;
+        }
+        .quote-card p {
+            font-size:12px;
+            color:var(--text-2);
+            margin:0;
+        }
+
+        .data-table {
+            width:100%;
+            border-collapse:collapse;
+            margin:20px 0;
+            border-radius:var(--r);
+            overflow:hidden;
+            border:1px solid var(--border);
+        }
+        .data-table th {
+            background:#111;
+            text-align:left;
+            padding:11px 16px;
+            font-size:10px;
+            font-weight:600;
+            letter-spacing:0.1em;
+            text-transform:uppercase;
+            color:var(--text-3);
+            border-bottom:1px solid var(--border);
+        }
+        .data-table td {
+            padding:11px 16px;
+            font-size:13px;
+            color:var(--text-2);
+            border-bottom:1px solid var(--border);
+        }
+        .data-table tr:last-child td { border-bottom:none; }
+        .data-table td strong { color:var(--text); }
+        .data-table td.highlight {
+            color:var(--teal);
+            font-weight:600;
+        }
+
+        .outcome-highlight {
+            background:linear-gradient(135deg, rgba(0,212,170,0.08) 0%, rgba(0,212,170,0.03) 100%);
+            border:1px solid rgba(0,212,170,0.25);
+            border-radius:var(--r);
+            padding:32px;
+            margin:20px 0;
+            text-align:center;
+        }
+        .outcome-highlight h3 {
+            font-family:var(--font-d);
+            font-size:24px;
+            font-weight:900;
+            text-transform:uppercase;
+            color:var(--teal);
+            margin-bottom:12px;
+        }
+        .outcome-highlight p {
+            font-size:15px;
+            color:var(--text);
+            line-height:1.75;
+            max-width:560px;
+            margin:0 auto;
+        }
+
+        .skills-grid {
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:12px;
+            margin-top:20px;
+        }
+        .skill-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:18px 20px;
+            display:flex;
+            align-items:flex-start;
+            gap:12px;
+        }
+        .skill-card-icon {
+            width:32px;
+            height:32px;
+            border-radius:8px;
+            background:rgba(0,212,170,0.08);
+            border:1px solid rgba(0,212,170,0.15);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:14px;
+            flex-shrink:0;
+        }
+        .skill-card-body h4 {
+            font-size:12px;
+            font-weight:600;
+            color:var(--text);
+            margin-bottom:4px;
+        }
+        .skill-card-body p {
+            font-size:11px;
+            color:var(--text-3);
+            line-height:1.5;
+            margin:0;
+        }
+
+        .timeline-badge {
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            background:rgba(0,212,170,0.06);
+            border:1px solid rgba(0,212,170,0.15);
+            border-radius:100px;
+            padding:6px 16px;
+            font-size:12px;
+            font-weight:500;
+            color:var(--teal);
+            margin:16px 0;
+        }
+
+        footer {
+            padding:32px 40px;
+            text-align:center;
+            font-size:11px;
+            color:var(--text-3);
+            border-top:1px solid var(--border);
+        }
+
+        @media (max-width:768px) {
+            .nav { padding:10px 20px; }
+            .nav-meta { display:none; }
+            .hero { padding:40px 20px 32px; }
+            .metrics-section, .insight-callout { padding:40px 20px; }
+            .metrics-grid { grid-template-columns:repeat(2,1fr); }
+            .content { padding:0 20px 60px; }
+            .two-col, .skills-grid { grid-template-columns:1fr; }
+            .arch-flow { flex-direction:column; }
+            .arch-step { border-right:none; border-bottom:1px solid var(--border); }
+            .arch-step:last-child { border-bottom:none; }
+            footer { padding:24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="index.html" class="nav-back">← Back to Portfolio</a>
+        <span class="nav-meta">Night Shift Agent · Case Study · 2025</span>
+    </nav>
+
+    <header class="hero">
+        <span class="hero-label">Case Study — 03</span>
+        <h1 class="hero-title">Night Shift<br>Agent</h1>
+        <p class="hero-sub">
+            A multi-agent voice AI system that handled luxury villa enquiries after hours, so high-intent guests never hit voicemail when no human team was online.
+        </p>
+        <div class="hero-stat">
+            <span class="hero-stat-num">95%</span>
+            <span class="hero-stat-text">real-world accuracy across a live 7-week pilot handling roughly 300 calls per day.</span>
+        </div>
+        <div class="hero-meta">
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Role</span>
+                <span class="hero-meta-value">Founder &amp; PM</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Client</span>
+                <span class="hero-meta-value">Lohono Stays</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Timeline</span>
+                <span class="hero-meta-value">Aug – Oct 2025</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Product</span>
+                <span class="hero-meta-value">Multi-Agent Voice AI</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Context</span>
+                <span class="hero-meta-value">Luxury villa bookings</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="metrics-section">
+        <div class="metrics-inner">
+            <span class="section-label">Impact Snapshot</span>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">300</div>
+                    <div class="metric-label">Calls handled per day during the live pilot</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">5</div>
+                    <div class="metric-label">Specialized agents orchestrated as one experience</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">90%</div>
+                    <div class="metric-label">Call scenarios resolved end-to-end without human intervention</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">100%</div>
+                    <div class="metric-label">After-hours enquiries routed to a confirmed next step</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="insight-callout">
+        <div class="callout-box">
+            <p><strong>Core Insight:</strong> For ultra-premium stays, after-hours is not downtime. It is when international, high-intent guests are often searching. If nobody answers, the lead is not delayed, it is lost.</p>
+        </div>
+    </div>
+
+    <main class="content">
+        <section class="section">
+            <h2 class="section-title">The Problem</h2>
+            <p>Lohono Stays manages ultra-premium villa rentals across India, with nightly prices ranging from Rs 60,000 to Rs 2,50,000. Many callers were high-intent travelers reaching out from different time zones, often well outside normal business hours.</p>
+            <p>But the operation had a critical gap: no representatives were available overnight. Calls went unanswered, enquiries dropped, and every missed ring created real revenue risk. At these booking values, a single lost conversation could mean a Rs 10-15 lakh opportunity disappearing before the team even woke up.</p>
+            <div class="two-col">
+                <div class="exp-card">
+                    <h4>The Old Way</h4>
+                    <div class="sub">Manual overnight gap</div>
+                    <p>Guests called after hours, heard silence or voicemail, and had no reliable way to continue the booking journey until the next day.</p>
+                </div>
+                <div class="exp-card primary">
+                    <h4>The AI Way</h4>
+                    <div class="sub">Always-on concierge layer</div>
+                    <p>The system answered instantly, qualified intent, shared relevant stay details, captured contact information, and locked in a morning callback window every time.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">The Product Experience</h2>
+            <p>The design goal was not just automation. It was reassurance. A guest calling about a premium stay at 2 AM should still feel like they had reached a capable hospitality brand, not a dead end.</p>
+
+            <div class="product-goal">
+                <h4>Caller Journey</h4>
+                <div class="goal-list">
+                    <div class="goal-item"><span class="goal-bullet"></span>Guest calls after hours and the AI answers immediately</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>AI qualifies destination, dates, group size, and booking intent</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>System explains villa options, amenities, and pricing context</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>If a specific property is mentioned, the AI shares pricing directly</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Guest name and number are captured cleanly for handoff</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>A callback window with a human experience manager is confirmed for the next morning</div>
+                </div>
+            </div>
+
+            <p>The experience felt like one natural conversation, but behind it was a carefully designed orchestration layer routing different intents to specialized flows without exposing that complexity to the caller.</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">System Architecture</h2>
+            <p>The system was structured around a simple operational promise: every after-hours call should end with useful progress and a clear next step. That required routing logic, specialist handling, and graceful fallbacks rather than a single generic voice bot.</p>
+
+            <div class="flow-diagram">
+                <img src="nightshift_arch.png" alt="Night Shift Agent architecture diagram showing inbound call routing across specialized agents and callback handoff">
+                <div class="flow-caption">Architecture diagram for the Night Shift Agent system used during the live Lohono Stays pilot.</div>
+            </div>
+
+            <div class="quotes-grid">
+                <div class="quote-card">
+                    <span class="quote-tag">Agent 1</span>
+                    <blockquote>Triage and router for every incoming call.</blockquote>
+                    <p>Identified whether the caller needed availability help, property-specific information, booking support, or non-business handling.</p>
+                </div>
+                <div class="quote-card">
+                    <span class="quote-tag">Agent 2</span>
+                    <blockquote>Availability specialist for location-first enquiries.</blockquote>
+                    <p>Collected destination, travel dates, group size, and budget when guests asked broad questions like "Do you have anything in Alibaug?"</p>
+                </div>
+                <div class="quote-card">
+                    <span class="quote-tag">Agent 3</span>
+                    <blockquote>Property-details specialist.</blockquote>
+                    <p>Handled property-specific pricing, confirmed stay details, and captured contact information for clean follow-up.</p>
+                </div>
+                <div class="quote-card">
+                    <span class="quote-tag">Agent 4</span>
+                    <blockquote>Booking support flow.</blockquote>
+                    <p>Served callers with existing reservation-related questions so the experience remained useful for current guests too.</p>
+                </div>
+                <div class="quote-card signal">
+                    <span class="quote-tag">Agent 5</span>
+                    <blockquote>Non-business handler.</blockquote>
+                    <p>Gracefully absorbed off-topic or unproductive conversations without breaking the overall caller experience.</p>
+                </div>
+            </div>
+
+            <div class="timeline-badge">Client recordings and raw conversation samples were intentionally omitted for confidentiality.</div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Build Snapshot</h2>
+            <p>The build ran from August to October 2025 and was deployed as a live pilot rather than a lab demo. That meant the product had to work across real noise, unclear intent, and real booking pressure from day one.</p>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Dimension</th>
+                        <th>Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Build period</strong></td>
+                        <td>August - October 2025</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pilot duration</strong></td>
+                        <td>7 weeks live</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Agents deployed</strong></td>
+                        <td class="highlight">5-agent orchestration</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Call volume</strong></td>
+                        <td>Approximately 300 calls per day</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Accuracy</strong></td>
+                        <td class="highlight">95% real-world accuracy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scenario coverage</strong></td>
+                        <td>90% handled end-to-end</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Knowledge coverage</strong></td>
+                        <td>93% at launch, improved weekly</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Property range</strong></td>
+                        <td>Luxury villas priced from Rs 60,000 to Rs 2,50,000 per night</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Pilot Results</h2>
+            <p>The pilot validated that the product could handle real hospitality demand, not just ideal scripted paths. Accuracy reached 95 percent across all calls. The remaining edge cases were mostly callers in highly noisy environments, and even then the system responded with a callback promise rather than a dead end.</p>
+            <p>Ninety percent of scenarios were completed end-to-end by the AI. The remaining 10 percent were escalated gracefully, with caller details preserved and a next-day follow-up window confirmed so no lead was dropped.</p>
+            <p>One product insight shaped the system during the pilot: most guests started location-first rather than property-first. Updating the routing logic to prioritize destination discovery reduced unnecessary back-and-forth early in the conversation and made the experience feel smarter immediately.</p>
+
+            <div class="quotes-grid">
+                <div class="quote-card signal">
+                    <span class="quote-tag">Product Insight</span>
+                    <blockquote>"Do you have anything in Alibaug?" turned out to be the dominant pattern, not property-specific search.</blockquote>
+                    <p>The routing logic was updated during the pilot to prioritize location-first discovery before property qualification.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Client Outcome</h2>
+            <div class="outcome-highlight">
+                <h3>The AI Became the Night Shift</h3>
+                <p>The product manager reviewed the pilot results and approved full handover. No missed calls. No lost leads. No human required between 8 PM and 10 AM.</p>
+            </div>
+            <p>That outcome mattered because the system was protecting high-value booking intent, not low-value support volume. At an average booking value around Rs 1.5 lakh, recovering even a handful of enquiries per week represented meaningful revenue protection.</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Product Skills Demonstrated</h2>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <div class="skill-card-icon">↗</div>
+                    <div class="skill-card-body">
+                        <h4>Multi-Agent Orchestration</h4>
+                        <p>Designed five specialized agents to behave like one coherent hospitality experience.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">◎</div>
+                    <div class="skill-card-body">
+                        <h4>Conversation Architecture</h4>
+                        <p>Built branching voice flows with graceful fallbacks and reliable next-step capture.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">◌</div>
+                    <div class="skill-card-body">
+                        <h4>High-Stakes Voice AI</h4>
+                        <p>Shipped for premium clientele, international callers, and revenue-sensitive booking moments.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">□</div>
+                    <div class="skill-card-body">
+                        <h4>Knowledge Operations</h4>
+                        <p>Tracked answer gaps weekly and improved coverage continuously during the live pilot.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">△</div>
+                    <div class="skill-card-body">
+                        <h4>Pilot to Production</h4>
+                        <p>Moved from live pilot to full client handover with operational approval.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        Night Shift Agent case study by Roshan Kumar · Built by Iro AI
+    </footer>
+</body>
+</html>

@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Guide Agent — Case Study · Roshan Kumar</title>
+    <meta name="description" content="An AI voice agent deployed at a live open house — 60+ guests, noisy environment, 99% accuracy. Built in 7 days by Iro AI.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Barlow:wght@900&display=swap" rel="stylesheet">
+    <style>
+        /* ── Design tokens (match main site) ── */
+        :root {
+            --bg: #0b0b0b;
+            --bg-tile: #141414;
+            --bg-alt: #0e0e0e;
+            --border: #1f1f1f;
+            --border-hover: #333;
+            --text: #f0ede8;
+            --text-2: #7a7a7a;
+            --text-3: #3a3a3a;
+            --teal: #00D4AA;
+            --teal-dim: rgba(0,212,170,0.10);
+            --teal-glow: rgba(0,212,170,0.22);
+            --font-d: 'Barlow', sans-serif;
+            --font-b: 'Space Grotesk', sans-serif;
+            --r: 12px;
+            --t: 240ms ease;
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { font-size:16px; scroll-behavior:smooth; }
+        body {
+            font-family: var(--font-b);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* grain */
+        body::before {
+            content:'';
+            position:fixed;
+            inset:0;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity:0.03;
+            pointer-events:none;
+            z-index:9999;
+        }
+        a { color:var(--text); text-decoration:none; }
+
+        /* ── NAVBAR ── */
+        .nav {
+            position:sticky; top:0;
+            display:flex; align-items:center; justify-content:space-between;
+            padding:10px 40px;
+            background:rgba(11,11,11,0.88);
+            backdrop-filter:blur(14px);
+            border-bottom:1px solid var(--border);
+            z-index:100;
+        }
+        .nav-back {
+            display:inline-flex; align-items:center; gap:8px;
+            font-size:11px; font-weight:500; letter-spacing:0.08em;
+            text-transform:uppercase; color:var(--text-2);
+            transition:color var(--t);
+        }
+        .nav-back:hover { color:var(--teal); }
+        .nav-meta {
+            font-size:11px; color:var(--text-3); letter-spacing:0.04em;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            max-width:880px; margin:0 auto;
+            padding:72px 40px 48px;
+        }
+        .hero-label {
+            display:inline-block;
+            font-size:10px; font-weight:600; letter-spacing:0.14em;
+            text-transform:uppercase; color:var(--teal);
+            border:1px solid rgba(0,212,170,0.3); border-radius:100px;
+            padding:4px 14px; margin-bottom:24px;
+        }
+        .hero-title {
+            font-family:var(--font-d);
+            font-size:clamp(42px, 7vw, 84px);
+            font-weight:900; line-height:0.93;
+            letter-spacing:-0.02em;
+            text-transform:uppercase;
+            color:var(--text);
+            margin-bottom:24px;
+        }
+        .hero-sub {
+            font-size:16px; font-weight:400;
+            color:var(--text-2); max-width:560px; line-height:1.75;
+            margin-bottom:32px;
+        }
+        .hero-meta {
+            display:flex; flex-wrap:wrap; gap:24px;
+            padding-top:24px; border-top:1px solid var(--border);
+        }
+        .hero-meta-item { display:flex; flex-direction:column; gap:3px; }
+        .hero-meta-label {
+            font-size:9px; font-weight:600; letter-spacing:0.14em;
+            text-transform:uppercase; color:var(--text-3);
+        }
+        .hero-meta-value { font-size:13px; font-weight:500; color:var(--text-2); }
+
+        /* ── HERO STAT ── */
+        .hero-stat {
+            display:flex; align-items:baseline; gap:14px;
+            margin-bottom:32px;
+            padding:20px 24px;
+            background:var(--teal-dim);
+            border:1px solid rgba(0,212,170,0.22);
+            border-radius:var(--r);
+        }
+        .hero-stat-num {
+            font-family:var(--font-d);
+            font-size:clamp(40px,6vw,64px);
+            font-weight:900; line-height:1;
+            color:var(--teal);
+            flex-shrink:0;
+        }
+        .hero-stat-text {
+            font-size:16px; font-weight:500; color:var(--text);
+            line-height:1.5;
+        }
+
+        /* ── IMPACT METRICS ── */
+        .metrics-section {
+            background:var(--bg-tile);
+            border-top:1px solid var(--border);
+            border-bottom:1px solid var(--border);
+            padding:48px 40px;
+        }
+        .metrics-inner {
+            max-width:880px; margin:0 auto;
+        }
+        .section-label {
+            font-size:10px; font-weight:600; letter-spacing:0.14em;
+            text-transform:uppercase; color:var(--teal);
+            margin-bottom:24px; display:block;
+        }
+        .metrics-grid {
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:1px;
+            background:var(--border);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            overflow:hidden;
+        }
+        .metric-card {
+            background:var(--bg-tile);
+            padding:28px 24px;
+        }
+        .metric-value {
+            font-family:var(--font-d);
+            font-size:clamp(32px, 4vw, 48px);
+            font-weight:900; line-height:1;
+            color:var(--teal); margin-bottom:8px;
+        }
+        .metric-label {
+            font-size:12px; font-weight:400;
+            color:var(--text-2); line-height:1.5;
+        }
+
+        /* ── CORE INSIGHT CALLOUT ── */
+        .insight-callout {
+            max-width:880px; margin:0 auto;
+            padding:48px 40px;
+        }
+        .callout-box {
+            background:var(--teal-dim);
+            border:1px solid rgba(0,212,170,0.25);
+            border-left:3px solid var(--teal);
+            border-radius:var(--r);
+            padding:28px 32px;
+        }
+        .callout-box p {
+            font-size:15px; font-weight:500;
+            color:var(--text); line-height:1.75;
+        }
+        .callout-box strong { color:var(--teal); }
+
+        /* ── CONTENT SECTIONS ── */
+        .content {
+            max-width:880px; margin:0 auto;
+            padding:0 40px 80px;
+            display:flex; flex-direction:column; gap:64px;
+        }
+        .section-title {
+            font-family:var(--font-d);
+            font-size:28px; font-weight:900;
+            text-transform:uppercase; letter-spacing:-0.01em;
+            color:var(--text); margin-bottom:20px;
+            padding-bottom:12px;
+            border-bottom:1px solid var(--border);
+        }
+        .section p {
+            font-size:14px; color:var(--text-2); line-height:1.8; margin-bottom:16px;
+        }
+        .section p:last-child { margin-bottom:0; }
+
+        /* ── TABLE ── */
+        .data-table {
+            width:100%; border-collapse:collapse; margin:20px 0;
+            border-radius:var(--r); overflow:hidden;
+            border:1px solid var(--border);
+        }
+        .data-table th {
+            background:#111; text-align:left;
+            padding:11px 16px;
+            font-size:10px; font-weight:600; letter-spacing:0.1em;
+            text-transform:uppercase; color:var(--text-3);
+            border-bottom:1px solid var(--border);
+        }
+        .data-table td {
+            padding:11px 16px; font-size:13px; color:var(--text-2);
+            border-bottom:1px solid var(--border);
+        }
+        .data-table tr:last-child td { border-bottom:none; }
+        .data-table tr:hover td { background:#151515; color:var(--text); }
+        .data-table td strong, .data-table td b { color:var(--text); font-weight:600; }
+        .data-table td.highlight { color:var(--teal); font-weight:600; }
+
+        /* ── TWO-COL ── */
+        .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+        .exp-card {
+            background:var(--bg-tile); border:1px solid var(--border);
+            border-radius:var(--r); padding:24px;
+        }
+        .exp-card h4 {
+            font-family:var(--font-d); font-size:16px; font-weight:900;
+            color:var(--text); text-transform:uppercase; margin-bottom:4px;
+        }
+        .exp-card .sub { font-size:10px; color:var(--text-3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; }
+        .exp-card p { font-size:13px; color:var(--text-2); line-height:1.6; }
+        .exp-card.primary { border-color:rgba(0,212,170,0.3); }
+        .exp-card.primary h4 { color:var(--teal); }
+
+        /* ── LEARNINGS LIST ── */
+        .learnings-list { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+        .learning-item {
+            background:var(--bg-tile); border:1px solid var(--border);
+            border-radius:var(--r); padding:20px 24px;
+            display:grid; grid-template-columns:24px 1fr; gap:16px;
+            align-items:start;
+        }
+        .learning-num {
+            font-family:var(--font-d); font-size:18px; font-weight:900;
+            color:var(--teal); line-height:1.2;
+        }
+        .learning-item h4 {
+            font-size:13px; font-weight:600; color:var(--text);
+            margin-bottom:6px;
+        }
+        .learning-item p { font-size:13px; color:var(--text-2); line-height:1.6; margin:0; }
+
+        /* ── PRODUCT GOAL BLOCK ── */
+        .product-goal {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-top:3px solid var(--teal);
+            border-radius:var(--r);
+            padding:24px;
+            margin-bottom:20px;
+        }
+        .product-goal h4 {
+            font-size:10px; font-weight:600; letter-spacing:0.12em;
+            text-transform:uppercase; color:var(--teal);
+            margin-bottom:14px;
+        }
+        .goal-list { display:flex; flex-direction:column; gap:8px; }
+        .goal-item {
+            display:flex; align-items:center; gap:12px;
+            font-size:14px; font-weight:500; color:var(--text);
+        }
+        .goal-bullet {
+            width:6px; height:6px; border-radius:50%;
+            background:var(--teal); flex-shrink:0;
+        }
+
+        /* ── AUDIO PLAYER ── */
+        .audio-section { margin:24px 0; display:flex; flex-direction:column; gap:16px; }
+        .audio-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:20px 24px;
+            display:flex; flex-direction:column; gap:12px;
+            transition:border-color var(--t);
+        }
+        .audio-card:hover { border-color:rgba(0,212,170,0.3); }
+        .audio-card-header {
+            display:flex; align-items:center; gap:12px;
+        }
+        .audio-icon {
+            width:40px; height:40px; border-radius:50%;
+            background:rgba(0,212,170,0.1);
+            border:1px solid rgba(0,212,170,0.25);
+            display:flex; align-items:center; justify-content:center;
+            font-size:16px; flex-shrink:0;
+        }
+        .audio-info { flex:1 1 auto; }
+        .audio-title {
+            font-size:13px; font-weight:600; color:var(--text);
+            margin-bottom:2px;
+        }
+        .audio-desc { font-size:11px; color:var(--text-3); }
+        audio {
+            width:100%;
+            accent-color: var(--teal);
+            filter: invert(0);
+        }
+        audio::-webkit-media-controls-panel {
+            background: #1a1a1a;
+        }
+        .audio-note {
+            font-size:11px; color:var(--text-3); margin-top:4px;
+        }
+
+        /* ── FLOW DIAGRAM ── */
+        .flow-diagram {
+            margin:24px 0;
+            border-radius:var(--r);
+            overflow:hidden;
+            border:1px solid var(--border);
+            background:var(--bg-tile);
+        }
+        .flow-diagram img {
+            width:100%; display:block;
+            border-radius:var(--r);
+        }
+        .flow-caption {
+            padding:12px 20px;
+            font-size:11px; color:var(--text-3);
+            border-top:1px solid var(--border);
+            background:var(--bg-tile);
+        }
+
+        /* ── ARCHITECTURE FLOW ── */
+        .arch-flow {
+            display:flex; align-items:center; gap:0;
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            overflow:hidden;
+            margin:20px 0;
+        }
+        .arch-step {
+            flex:1; padding:20px 16px;
+            text-align:center;
+            border-right:1px solid var(--border);
+            position:relative;
+        }
+        .arch-step:last-child { border-right:none; }
+        .arch-step-icon { font-size:22px; margin-bottom:8px; display:block; }
+        .arch-step-label {
+            font-size:11px; font-weight:600; color:var(--text);
+            letter-spacing:0.04em;
+            margin-bottom:4px;
+        }
+        .arch-step-sub { font-size:10px; color:var(--text-3); }
+        .arch-arrow {
+            flex-shrink:0; color:var(--teal); font-size:16px;
+            padding:0 4px;
+        }
+
+        /* ── QUOTE CARDS ── */
+        .quotes-grid { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+        .quote-card {
+            background:var(--bg-tile); border:1px solid var(--border);
+            border-radius:var(--r); padding:20px 24px;
+            border-left:2px solid var(--border);
+            transition:border-color var(--t);
+        }
+        .quote-card:hover { border-left-color:var(--teal); }
+        .quote-card.signal { border-left-color:var(--teal); }
+        .quote-tag {
+            font-size:9px; font-weight:600; letter-spacing:0.12em;
+            text-transform:uppercase; color:var(--text-3); margin-bottom:8px;
+            display:block;
+        }
+        .quote-card blockquote {
+            font-size:14px; font-style:italic;
+            color:var(--text); line-height:1.7; margin-bottom:8px;
+        }
+        .quote-card p { font-size:12px; color:var(--text-2); margin:0; }
+
+        /* ── OUTCOME HIGHLIGHT ── */
+        .outcome-highlight {
+            background:linear-gradient(135deg, rgba(0,212,170,0.08) 0%, rgba(0,212,170,0.03) 100%);
+            border:1px solid rgba(0,212,170,0.25);
+            border-radius:var(--r);
+            padding:32px;
+            margin:20px 0;
+            text-align:center;
+        }
+        .outcome-highlight h3 {
+            font-family:var(--font-d); font-size:24px; font-weight:900;
+            text-transform:uppercase; color:var(--teal);
+            margin-bottom:12px;
+        }
+        .outcome-highlight p {
+            font-size:15px; color:var(--text); line-height:1.75;
+            max-width:520px; margin:0 auto;
+        }
+
+        /* ── SKILLS GRID ── */
+        .skills-grid {
+            display:grid; grid-template-columns:repeat(2,1fr);
+            gap:12px; margin-top:20px;
+        }
+        .skill-card {
+            background:var(--bg-tile);
+            border:1px solid var(--border);
+            border-radius:var(--r);
+            padding:18px 20px;
+            display:flex; align-items:start; gap:12px;
+            transition:border-color var(--t);
+        }
+        .skill-card:hover { border-color:rgba(0,212,170,0.25); }
+        .skill-card-icon {
+            width:32px; height:32px; border-radius:8px;
+            background:rgba(0,212,170,0.08);
+            border:1px solid rgba(0,212,170,0.15);
+            display:flex; align-items:center; justify-content:center;
+            font-size:14px; flex-shrink:0;
+        }
+        .skill-card-body h4 {
+            font-size:12px; font-weight:600; color:var(--text);
+            margin-bottom:4px;
+        }
+        .skill-card-body p {
+            font-size:11px; color:var(--text-3); line-height:1.5; margin:0;
+        }
+
+        /* ── TIMELINE BADGE ── */
+        .timeline-badge {
+            display:inline-flex; align-items:center; gap:8px;
+            background:rgba(0,212,170,0.06);
+            border:1px solid rgba(0,212,170,0.15);
+            border-radius:100px;
+            padding:6px 16px;
+            font-size:12px; font-weight:500;
+            color:var(--teal); margin:16px 0;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            padding:32px 40px;
+            text-align:center;
+            font-size:11px; color:var(--text-3);
+            border-top:1px solid var(--border);
+        }
+        footer a { color:var(--text-3); border-bottom:1px solid var(--border); transition:color var(--t); }
+        footer a:hover { color:var(--teal); }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:768px) {
+            .nav { padding:10px 20px; }
+            .nav-meta { display:none; }
+            .hero { padding:40px 20px 32px; }
+            .metrics-section, .insight-callout { padding:40px 20px; }
+            .metrics-grid { grid-template-columns:repeat(2,1fr); }
+            .content { padding:0 20px 60px; }
+            .two-col, .skills-grid { grid-template-columns:1fr; }
+            .arch-flow { flex-direction:column; }
+            .arch-step { border-right:none; border-bottom:1px solid var(--border); }
+            .arch-step:last-child { border-bottom:none; }
+            footer { padding:24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="nav">
+        <a href="index.html" class="nav-back">← Back to Portfolio</a>
+        <span class="nav-meta">Property Guide Agent · Case Study · 2025</span>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero">
+        <span class="hero-label">Case Study — 02</span>
+        <h1 class="hero-title">Property<br>Guide<br>Agent</h1>
+        <p class="hero-sub">
+            An AI voice agent deployed at a live open house. Real environment, real guests, real results.
+        </p>
+        <div class="hero-stat">
+            <span class="hero-stat-num">99%</span>
+            <span class="hero-stat-text">accuracy across 60+ live interactions in a genuinely noisy open house environment.</span>
+        </div>
+        <div class="hero-meta">
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Role</span>
+                <span class="hero-meta-value">Founder & PM</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Company</span>
+                <span class="hero-meta-value">Iro AI</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Timeline</span>
+                <span class="hero-meta-value">7 Days to Live</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Launch</span>
+                <span class="hero-meta-value">14 Nov 2025</span>
+            </div>
+            <div class="hero-meta-item">
+                <span class="hero-meta-label">Product</span>
+                <span class="hero-meta-value">AI Voice Agent</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- IMPACT METRICS -->
+    <section class="metrics-section">
+        <div class="metrics-inner">
+            <span class="section-label">Impact Snapshot</span>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">99%</div>
+                    <div class="metric-label">Conversation accuracy — validated in a live, noisy open house</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">60+</div>
+                    <div class="metric-label">Live attendees interacted with the AI at the launch event</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">7</div>
+                    <div class="metric-label">Days from concept to live deployment — including testing</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1</div>
+                    <div class="metric-label">Unsolicited referral + LinkedIn recommendation within days of launch</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CORE INSIGHT -->
+    <div class="insight-callout">
+        <div class="callout-box">
+            <p><strong>Core Insight:</strong> Property viewings are completely dependent on agent availability. When an agent is unavailable, buyers wait — or they leave. This system made the property open for self-guided tours without requiring a full-time agent on site, turning every unlock into a guided, qualified interaction.</p>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <!-- PROBLEM -->
+        <section class="section">
+            <h2 class="section-title">The Problem</h2>
+            <p>Real estate agents are spread thin. A single agent might be responsible for multiple listings simultaneously — phone calls, client meetings, paperwork, and physical showings all competing for the same hours.</p>
+            <p>The result? Buyers arrive at a property and wait. Or they don't arrive at all because scheduling is too much friction. Every missed showing is a potential deal lost — not because the property is wrong, but because the system failed to support the buyer at the moment of highest intent.</p>
+            <div class="two-col">
+                <div class="exp-card">
+                    <h4>The Old Way</h4>
+                    <div class="sub">Human-dependent showing</div>
+                    <p>Agent must be present. Scheduling friction. No support if agent is unavailable or running late. Buyer experience is inconsistent and entirely agent-dependent.</p>
+                </div>
+                <div class="exp-card primary">
+                    <h4>The AI Way</h4>
+                    <div class="sub">Event-triggered automation</div>
+                    <p>Lock triggers AI. AI calls buyer within 60 seconds. Greets by name, guides room-by-room, answers questions in real time. Consistent, warm, available 24/7.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRODUCT EXPERIENCE -->
+        <section class="section">
+            <h2 class="section-title">The Product Experience</h2>
+            <p>The experience was designed to feel warm and personal from first contact — not robotic, not transactional. The goal was never just information delivery. It was making people feel genuinely cared for and respected at every step of the property journey.</p>
+
+            <div class="product-goal">
+                <h4>Buyer Journey</h4>
+                <div class="goal-list">
+                    <div class="goal-item"><span class="goal-bullet"></span>Buyer receives a temporary smart lock access code</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Unlocks the front door — webhook fires instantly</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>AI calls within 60 seconds — greets buyer by name</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Guides room by room — features, questions, warm conversation</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Handles 6–8 questions per tour in real time</div>
+                    <div class="goal-item"><span class="goal-bullet"></span>Keeps interaction warm — small talk included</div>
+                </div>
+            </div>
+
+            <p>For the open house event, a QR code trigger was added so guests could initiate a call manually — adapting the system to a crowded, social environment while keeping the same quality of conversational experience.</p>
+        </section>
+
+        <!-- SYSTEM ARCHITECTURE -->
+        <section class="section">
+            <h2 class="section-title">System Architecture</h2>
+            <p>The system is built on a simple, event-driven principle: the door unlock is the trigger. Everything flows from that single event — no manual input, no scheduling, no human in the loop required.</p>
+
+            <!-- Architecture Flow -->
+            <div class="arch-flow">
+                <div class="arch-step">
+                    <span class="arch-step-icon">🔐</span>
+                    <div class="arch-step-label">Door Unlock</div>
+                    <div class="arch-step-sub">Smart lock event</div>
+                </div>
+                <div class="arch-step">
+                    <span class="arch-step-icon">⚡</span>
+                    <div class="arch-step-label">Webhook</div>
+                    <div class="arch-step-sub">Buyer details fired instantly</div>
+                </div>
+                <div class="arch-step">
+                    <span class="arch-step-icon">🤖</span>
+                    <div class="arch-step-label">AI Initiates Call</div>
+                    <div class="arch-step-sub">Within 60 seconds</div>
+                </div>
+                <div class="arch-step">
+                    <span class="arch-step-icon">🏠</span>
+                    <div class="arch-step-label">Guided Tour</div>
+                    <div class="arch-step-sub">Room-by-room, live Q&amp;A</div>
+                </div>
+            </div>
+
+            <p>Two conversational personas were built, each trained on the full property knowledge base. The routing decision was handled automatically, with both agents designed to feel distinctly human — different cadences, different warmth profiles, both optimised for the specific property context.</p>
+
+            <table class="data-table">
+                <thead><tr><th>Component</th><th>Detail</th></tr></thead>
+                <tbody>
+                    <tr><td>Trigger mechanism</td><td>Smart lock webhook → real-time event dispatch</td></tr>
+                    <tr><td>Call initiation window</td><td class="highlight">&lt; 60 seconds from door unlock</td></tr>
+                    <tr><td>Conversational personas</td><td>2 — distinct voices &amp; cadences, same knowledge base</td></tr>
+                    <tr><td>Knowledge base</td><td>Full property data: specs, features, neighbourhood, pricing</td></tr>
+                    <tr><td>Open house trigger</td><td>QR code (manual call initiation for event context)</td></tr>
+                    <tr><td>Avg. interaction duration</td><td>~4 minutes</td></tr>
+                    <tr><td>Questions handled per tour</td><td>6–8 real-time</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Product Flow Diagram -->
+            <div class="flow-diagram">
+                <img src="image.png" alt="Property Guide Agent — product flow diagram showing door unlock to AI call to guided tour" />
+                <div class="flow-caption">↑ Product flow — from smart lock trigger to guided AI property tour</div>
+            </div>
+        </section>
+
+        <!-- LIVE DEMOS -->
+        <section class="section">
+            <h2 class="section-title">Hear It Live</h2>
+            <p>These are real recordings from the live open house event on 14 Nov 2025. Two conversational AI personas — different voices, same property knowledge, same standard of warmth. These were recorded in the live environment, with background noise, real guests, real questions.</p>
+
+            <div class="audio-section">
+                <div class="audio-card">
+                    <div class="audio-card-header">
+                        <div class="audio-icon">🎙️</div>
+                        <div class="audio-info">
+                            <div class="audio-title">Ava — Conversational Persona 1</div>
+                            <div class="audio-desc">Recorded live · Open House · 14 Nov 2025</div>
+                        </div>
+                    </div>
+                    <audio controls preload="metadata">
+                        <source src="ava (1).wav" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div class="audio-note">Live recording — ambient noise intentional. This is how it sounded in the room.</div>
+                </div>
+
+                <div class="audio-card">
+                    <div class="audio-card-header">
+                        <div class="audio-icon">🎙️</div>
+                        <div class="audio-info">
+                            <div class="audio-title">Milo — Conversational Persona 2</div>
+                            <div class="audio-desc">Recorded live · Open House · 14 Nov 2025</div>
+                        </div>
+                    </div>
+                    <audio controls preload="metadata">
+                        <source src="milo.wav" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div class="audio-note">Live recording — different persona, same property knowledge base and 99% accuracy standard.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BUILD SNAPSHOT -->
+        <section class="section">
+            <h2 class="section-title">Build Snapshot</h2>
+            <p>Seven days. Concept to live deployment. This wasn't a prototype — it was a production system running at a real event with 60+ attendees and zero handholding once live.</p>
+
+            <span class="timeline-badge">⚡ Concept → Live in 7 days · Including testing</span>
+
+            <table class="data-table">
+                <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Total build time</td><td class="highlight">7 days (including testing)</td></tr>
+                    <tr><td>Conversational personas</td><td>2</td></tr>
+                    <tr><td>Real-world accuracy</td><td class="highlight">99%</td></tr>
+                    <tr><td>Average interaction time</td><td>~4 minutes</td></tr>
+                    <tr><td>Typical questions per tour</td><td>6–8</td></tr>
+                    <tr><td>Launch event</td><td>14 Nov 2025</td></tr>
+                    <tr><td>Live attendees at launch</td><td class="highlight">60+</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- LAUNCH EVENT -->
+        <section class="section">
+            <h2 class="section-title">Launch — Open House</h2>
+            <p>The system went live at a real open house — not a controlled demo, not a staging environment. The room was loud. Conversations overlapped. People were moving around. These are exactly the conditions that expose weaknesses in voice AI.</p>
+            <p>The agents held up. 99% accuracy across every interaction. Guests didn't just use the product — they enjoyed it. The experience felt novel and personal, not robotic.</p>
+
+            <div class="two-col">
+                <div class="exp-card">
+                    <h4>The Environment</h4>
+                    <div class="sub">Conditions that expose AI weakness</div>
+                    <p>60+ guests simultaneously. Background noise. Overlapping conversations. People moving between rooms mid-sentence. Real-world chaos — not a lab.</p>
+                </div>
+                <div class="exp-card primary">
+                    <h4>The Result</h4>
+                    <div class="sub">What actually happened</div>
+                    <p>99% accuracy. Zero system failures. Guests engaged, asked questions, stayed on the call. The AI felt warm and capable — not a gimmick.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLIENT OUTCOME -->
+        <section class="section">
+            <h2 class="section-title">Client Outcome</h2>
+
+            <div class="outcome-highlight">
+                <h3>Organic Referral. Zero Outbound.</h3>
+                <p>The client referred Iro AI to another founder in his network — without being asked. An unsolicited LinkedIn recommendation followed within days of the launch going live.</p>
+            </div>
+
+            <div class="quotes-grid">
+                <div class="quote-card signal">
+                    <span class="quote-tag">Client Response · Post-Launch</span>
+                    <blockquote>"The client referred Iro AI to another founder in his network — without being asked."</blockquote>
+                    <p>Unsolicited referral within days of going live · Followed by a LinkedIn recommendation</p>
+                </div>
+                <div class="quote-card">
+                    <span class="quote-tag">Validation Signal</span>
+                    <blockquote>"An unsolicited LinkedIn recommendation followed within days of the launch."</blockquote>
+                    <p>This is the clearest validation: a client so satisfied they became an advocate before the engagement was even fully wrapped.</p>
+                </div>
+            </div>
+
+            <p style="margin-top:20px;">This is the clearest validation signal available pre-revenue: a client so satisfied by the work that they actively advocate for the product to their professional network, unprompted, within the first week of going live.</p>
+        </section>
+
+        <!-- WHAT THIS DEMONSTRATES -->
+        <section class="section">
+            <h2 class="section-title">What This Demonstrates</h2>
+            <p>This project sits at the intersection of conversational AI design, event-driven system architecture, and rapid product delivery. Each skill is validated not in theory but in a genuinely challenging live environment.</p>
+
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <div class="skill-card-icon">💬</div>
+                    <div class="skill-card-body">
+                        <h4>Conversational UX Design</h4>
+                        <p>Building AI agents people actually want to talk to — warm, natural, not robotic.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">⚡</div>
+                    <div class="skill-card-body">
+                        <h4>Event-Triggered Automation</h4>
+                        <p>Webhook-based real-time orchestration from physical trigger to AI response in &lt;60s.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">🎙️</div>
+                    <div class="skill-card-body">
+                        <h4>Voice AI Orchestration</h4>
+                        <p>Multi-persona routing with full property knowledge base integration.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">🚀</div>
+                    <div class="skill-card-body">
+                        <h4>Rapid Product Deployment</h4>
+                        <p>Concept to live production system in 7 days, including testing.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">🛡️</div>
+                    <div class="skill-card-body">
+                        <h4>Real-World Resilience</h4>
+                        <p>99% accuracy in a noisy live environment — not a controlled lab setting.</p>
+                    </div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-card-icon">📐</div>
+                    <div class="skill-card-body">
+                        <h4>System Architecture</h4>
+                        <p>End-to-end event-driven architecture from smart lock to AI conversation.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEARNINGS -->
+        <section class="section">
+            <h2 class="section-title">Key Learnings</h2>
+            <div class="learnings-list">
+                <div class="learning-item">
+                    <div class="learning-num">01</div>
+                    <div>
+                        <h4>Warmth is a product feature, not a nice-to-have</h4>
+                        <p>Guests didn't just tolerate the AI — they enjoyed it. The conversational design specifically focused on making people feel cared for, not processed. That's a deliberate product choice, not a side effect.</p>
+                    </div>
+                </div>
+                <div class="learning-item">
+                    <div class="learning-num">02</div>
+                    <div>
+                        <h4>Live events are the ultimate stress test</h4>
+                        <p>No controlled demo environment catches what a real open house with 60+ people will expose. Deploying into chaos proved the system's resilience more convincingly than any internal QA process could.</p>
+                    </div>
+                </div>
+                <div class="learning-item">
+                    <div class="learning-num">03</div>
+                    <div>
+                        <h4>Speed of deployment unlocks real signal</h4>
+                        <p>7 days. The value of moving fast isn't just efficiency — it's that you get real feedback, real results, and real referrals before slower-moving competitors have finished their planning cycle.</p>
+                    </div>
+                </div>
+                <div class="learning-item">
+                    <div class="learning-num">04</div>
+                    <div>
+                        <h4>Unsolicited referrals are the real product-market fit signal</h4>
+                        <p>NPS, surveys, and reviews are proxies. A client who actively refers you to their network — before you've even asked — is the real thing. That's the signal this product generated within days.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>Built by <strong>Iro AI</strong> · Roshan Kumar · <a href="index.html">Back to portfolio</a></p>
+        <p style="margin-top:8px;">This project demonstrates how conversational AI can replace physical presence in real-world workflows — not just digital support tasks.</p>
+    </footer>
+
+</body>
+</html>
