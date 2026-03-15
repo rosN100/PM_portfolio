@@ -1249,6 +1249,15 @@ a:hover {
     .container {
         padding: var(--gap) 16px 80px;
     }
+    .left-column {
+        flex-direction: column;
+        flex-wrap: nowrap;
+    }
+    .tile-companies,
+    .tile-roles {
+        flex: 1 1 100%;
+        width: 100%;
+    }
     .tile-name {
         grid-template-columns: 1fr;
     }
