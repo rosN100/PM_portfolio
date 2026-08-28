@@ -1015,6 +1015,13 @@ a:hover {
    FLOATING BUTTON
    ======================================== */
 
+/* Temporary feature flag: switch data-chat-enabled to "true" on <body> to restore the assistant. */
+body[data-chat-enabled="false"] .floating-btn,
+body[data-chat-enabled="false"] .chat-overlay,
+body[data-chat-enabled="false"] .chat-drawer {
+    display: none !important;
+}
+
 .floating-btn {
     position: fixed;
     bottom: 28px;
